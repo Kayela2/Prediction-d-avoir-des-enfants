@@ -1,0 +1,34 @@
+# ── Données EDSC (trop volumineuses pour GitHub) ──────────────────────────────
+data/
+*.SAV
+*.sav
+*.dta
+
+# ── Python ─────────────────────────────────────────────────────────────────────
+backend/venv/
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+backend/.env
+backend/hearth.db
+backend/*.db
+*.egg-info/
+.pytest_cache/
+
+# ── Node ───────────────────────────────────────────────────────────────────────
+notebooks/edsc-fecondite/node_modules/
+notebooks/edsc-fecondite/dist/
+
+# ── Outputs d'analyse (graphiques, tableaux CSV) ──────────────────────────────
+outputs/
+
+# ── OS ─────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── IDE ────────────────────────────────────────────────────────────────────────
+.vscode/settings.json
+.idea/
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+*.log

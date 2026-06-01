@@ -1,8 +1,9 @@
 import axios from 'axios'
 
-// Utilise la variable d'environnement Vite ou l'URL par défaut
+// En production (même domaine) : URLs relatives.
+// En dev : Vite proxy redirige vers localhost:8000 automatiquement.
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:8000',
+  baseURL: import.meta.env.VITE_API_URL ?? '',
 })
 
 // Injecter le token JWT dans chaque requête

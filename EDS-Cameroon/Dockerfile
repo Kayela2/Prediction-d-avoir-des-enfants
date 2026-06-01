@@ -2,17 +2,16 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Installer les dépendances système nécessaires pour pyreadstat et scipy
+# Dépendances système pour scikit-learn / numpy
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
-    g++ \
     && rm -rf /var/lib/apt/lists/*
 
-# Copier et installer les dépendances Python
-COPY backend/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Installer uniquement les dépendances de production
+COPY backend/requirements-prod.txt .
+RUN pip install --no-cache-dir -r requirements-prod.txt
 
-# Copier tout le backend (code + modèle ML)
+# Copier le code backend + modèle ML
 COPY backend/ ./backend/
 
 WORKDIR /app/backend

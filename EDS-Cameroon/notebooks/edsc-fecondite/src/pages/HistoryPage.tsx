@@ -82,12 +82,12 @@ export default function HistoryPage() {
           onChange={e => setQuery(e.target.value)}
           style={{
             width: '100%', padding: '12px 14px 12px 40px',
-            background: 'white', border: '1.5px solid var(--outline-variant)',
+            background: 'white', border: '1.5px solid var(--border)',
             borderRadius: 12, fontSize: 14, color: 'var(--text)',
             fontFamily: 'inherit', outline: 'none',
           }}
           onFocus={e => (e.target.style.borderColor = 'var(--primary)')}
-          onBlur={e => (e.target.style.borderColor = 'var(--outline-variant)')}
+          onBlur={e => (e.target.style.borderColor = 'var(--border)')}
         />
       </div>
 
@@ -99,7 +99,7 @@ export default function HistoryPage() {
               padding: '7px 16px',
               background: tab === t ? 'var(--primary)' : 'white',
               color: tab === t ? 'white' : 'var(--text-muted)',
-              border: `1.5px solid ${tab === t ? 'var(--primary)' : 'var(--outline-variant)'}`,
+              border: `1.5px solid ${tab === t ? 'var(--primary)' : 'var(--border)'}`,
               borderRadius: 999, fontSize: 13, fontWeight: 600,
               cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
             }}>
@@ -123,13 +123,13 @@ export default function HistoryPage() {
               onClick={() => navigate(`/dashboard/resultats/${sim.id}`)}
               style={{
                 background: 'white', borderRadius: 18, padding: '18px 20px',
-                border: '1px solid var(--outline-variant)',
-                boxShadow: 'var(--shadow-card)',
+                border: '1px solid var(--border)',
+                boxShadow: 'var(--shadow-xs)',
                 cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 16,
                 transition: 'box-shadow 0.15s, transform 0.15s',
               }}
               onMouseOver={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 24px rgba(79,70,229,0.12)'; (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)' }}
-              onMouseOut={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = 'var(--shadow-card)'; (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)' }}>
+              onMouseOut={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = 'var(--shadow-xs)'; (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)' }}>
 
               <div style={{ width: 48, height: 48, background: 'var(--surface-low)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 22 }}>
                 {sim.icon}
@@ -143,7 +143,7 @@ export default function HistoryPage() {
                   </span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ flex: 1, height: 5, background: 'var(--outline-variant)', borderRadius: 99, overflow: 'hidden' }}>
+                  <div style={{ flex: 1, height: 5, background: 'var(--border)', borderRadius: 99, overflow: 'hidden' }}>
                     <motion.div
                       initial={{ width: 0 }} animate={{ width: `${sim.confidence ?? 0}%` }} transition={{ duration: 0.8, delay: 0.1 + i * 0.1 }}
                       style={{ height: '100%', background: `linear-gradient(90deg, var(--primary), #7C3AED)`, borderRadius: 99 }} />

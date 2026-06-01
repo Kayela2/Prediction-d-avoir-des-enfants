@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
-import { Home, BarChart2, Clock, Bell, Settings, User, Plus, LogOut } from 'lucide-react'
+import { Home, BarChart2, Clock, Bell, Settings, User, Plus, LogOut, Heart } from 'lucide-react'
 import { useStore } from '../../store/useStore'
 
 const sidebarNav = [
@@ -38,7 +38,7 @@ export default function DashboardLayout() {
       }}>
         {/* Logo */}
         <div onClick={() => nav('/')} style={{ display:'flex', alignItems:'center', gap:10, padding:'4px 10px', marginBottom:36, cursor:'pointer' }}>
-          <div style={{ width:38, height:38, background:'linear-gradient(135deg,#6366F1,#8B5CF6)', borderRadius:11, display:'flex', alignItems:'center', justifyContent:'center', fontSize:19, boxShadow:'0 0 18px rgba(99,102,241,0.5)', flexShrink:0 }}>🔗</div>
+          <div style={{ width:38, height:38, background:'linear-gradient(135deg,#6366F1,#8B5CF6)', borderRadius:11, display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 0 18px rgba(99,102,241,0.5)', flexShrink:0 }}><Heart size={19} color="white" strokeWidth={2.5} /></div>
           <span style={{ fontWeight:800, fontSize:19, color:'white', letterSpacing:'-0.03em' }}>Hearth</span>
         </div>
 

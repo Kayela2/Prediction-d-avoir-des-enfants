@@ -52,9 +52,12 @@ if STATIC_DIR.exists():
     # Fichiers compilés JS/CSS générés par Vite
     app.mount("/assets", StaticFiles(directory=STATIC_DIR / "assets"), name="assets")
 
-    # Catch-all : toute route non-API renvoie index.html (React Router gère la navigation)
+    # Catch-all : fichier statique s'il existe, sinon index.html (React Router)
     @app.get("/{full_path:path}", include_in_schema=False)
     async def serve_spa(full_path: str):
+        file_path = STATIC_DIR / full_path
+        if file_path.exists() and file_path.is_file():
+            return FileResponse(file_path)
         return FileResponse(STATIC_DIR / "index.html")
 else:
     # Mode développement — pas de fichiers statiques

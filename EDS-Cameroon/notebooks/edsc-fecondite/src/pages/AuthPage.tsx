@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Eye, EyeOff, Mail, Lock, User, ArrowRight, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react'
+import { Eye, EyeOff, Mail, Lock, User, ArrowRight, CheckCircle, AlertCircle, ArrowLeft, Heart } from 'lucide-react'
 import { useStore } from '../store/useStore'
 
 const fadeUp = { hidden:{opacity:0,y:24}, show:{opacity:1,y:0,transition:{duration:0.5,ease:'easeOut'}} } satisfies import('framer-motion').Variants
@@ -51,7 +51,7 @@ export default function AuthPage() {
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(7,11,24,0.96) 0%, rgba(7,11,24,0.7) 50%, rgba(7,11,24,0.3) 100%)' }} />
         {/* Logo */}
         <div style={{ position: 'absolute', top: 36, left: 36, display: 'flex', alignItems: 'center', gap: 10, zIndex: 2 }}>
-          <div style={{ width: 38, height: 38, background: 'linear-gradient(135deg,#6366F1,#8B5CF6)', borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 19, boxShadow: '0 0 20px rgba(99,102,241,0.5)' }}>🔗</div>
+          <div style={{ width: 38, height: 38, background: 'linear-gradient(135deg,#6366F1,#8B5CF6)', borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 20px rgba(99,102,241,0.5)' }}><Heart size={19} color="white" strokeWidth={2.5} /></div>
           <span style={{ fontWeight: 800, fontSize: 20, color: 'white', letterSpacing: '-0.03em' }}>Hearth</span>
         </div>
         {/* Bottom content */}
@@ -74,7 +74,7 @@ export default function AuthPage() {
             ))}
           </div>
           <div style={{ marginTop: 32, paddingTop: 24, borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>🇨🇲 EDSC-V 2018 · INS Cameroun · Thèse Master 1</span>
+            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>🇨🇲 EDSC-V 2018 · INS Cameroun</span>
           </div>
         </div>
       </div>

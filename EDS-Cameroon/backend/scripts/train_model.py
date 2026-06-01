@@ -25,6 +25,9 @@ FEATURES = [
     "statut_matrimonial",
     "milieu_residence",
     "quintile_richesse",
+    "travail",
+    "region_nord",
+    "religion_musulman",
 ]
 
 VARIABLES_DHS = {
@@ -36,6 +39,9 @@ VARIABLES_DHS = {
     "v025": "milieu_residence",
     "v190": "quintile_richesse",
     "v602": "desir_enfant",
+    "v714": "travail_raw",
+    "v024": "region",
+    "v130": "religion",
 }
 
 
@@ -54,8 +60,11 @@ def load_and_prepare() -> tuple[pd.DataFrame, pd.Series]:
     )
     df = df[df["desir_enfant_bin"].notna()].copy()
 
-    # Contraceptif binaire (0 = aucune méthode, 1 = méthode utilisée)
-    df["contraceptif"] = (df["utilisation_contraceptif"] > 0).astype(int)
+    # Variables dérivées
+    df["contraceptif"]       = (df["utilisation_contraceptif"] > 0).astype(int)
+    df["travail"]            = df["travail_raw"].fillna(0).astype(int).clip(0, 1)
+    df["region_nord"]        = df["region"].isin([1, 4, 6]).astype(int)
+    df["religion_musulman"]  = (df["religion"] == 4).astype(int)
 
     df_mod = df[FEATURES + ["desir_enfant_bin"]].dropna()
     X = df_mod[FEATURES].astype(float)

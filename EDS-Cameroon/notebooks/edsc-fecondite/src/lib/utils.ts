@@ -5,7 +5,7 @@ export function cn(...classes: (string | undefined | false | null)[]) {
 export function formatCurrency(value: number): string {
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
-    currency: 'EUR',
+    currency: 'XAF',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(value)

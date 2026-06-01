@@ -18,6 +18,9 @@ export interface SimulationData {
   quintile: Quintile
   statutMatrimonial: number  // 1-5
   contraceptif: number       // 0 ou 1
+  travail: number            // 0=Non 1=Oui
+  regionNord: number         // 0 ou 1
+  religionMusulman: number   // 0 ou 1
 }
 
 // Simulation telle que retournée par le backend (snake_case converti)
@@ -36,6 +39,9 @@ export interface Simulation {
   statut_matrimonial: number
   milieu_residence: number
   quintile_richesse: number
+  travail: number
+  region_nord: number
+  religion_musulman: number
   desire_enfant: boolean | null
   probability: number | null
   model_used: string | null

@@ -19,6 +19,9 @@ backend/*.db
 notebooks/edsc-fecondite/node_modules/
 notebooks/edsc-fecondite/dist/
 
+# ── Build frontend (généré par Dockerfile — ne pas versionner) ────────────────
+backend/static/
+
 # ── Outputs d'analyse (graphiques, tableaux CSV) ──────────────────────────────
 outputs/
 

@@ -15,6 +15,9 @@ FEATURE_NAMES = [
     "statut_matrimonial",
     "milieu_residence",
     "quintile_richesse",
+    "travail",
+    "region_nord",
+    "religion_musulman",
 ]
 
 FEATURE_LABELS = {
@@ -25,6 +28,9 @@ FEATURE_LABELS = {
     "statut_matrimonial": "Statut matrimonial",
     "milieu_residence": "Milieu de résidence",
     "quintile_richesse": "Quintile de richesse",
+    "travail": "Emploi (travail)",
+    "region_nord": "Région septentrionale",
+    "religion_musulman": "Religion musulmane",
 }
 
 
@@ -95,6 +101,15 @@ class FertilityPredictor:
 
         if data["quintile_richesse"] <= 2:
             insights.append("Un faible niveau de richesse est corrélé à un désir de fécondité plus élevé.")
+
+        if data.get("travail") == 1:
+            insights.append("L'activité professionnelle féminine est associée à un recul du désir d'enfant dans les zones urbaines.")
+
+        if data.get("region_nord") == 1:
+            insights.append("Les régions septentrionales (Adamaoua, Extrême-Nord, Nord) présentent les taux de fécondité les plus élevés du Cameroun.")
+
+        if data.get("religion_musulman") == 1:
+            insights.append("La religion musulmane est associée à des normes de fécondité plus élevées dans le contexte camerounais.")
 
         return insights
 

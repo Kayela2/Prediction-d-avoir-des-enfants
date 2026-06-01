@@ -1,6 +1,7 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Bell, Search, Save, Share2, Sparkles, Lightbulb, MoreVertical, GraduationCap, MapPin, Coins } from 'lucide-react'
+import { Bell, Search, Save, Share2, Sparkles, Lightbulb, MoreVertical, GraduationCap, MapPin, Coins, Check, CheckCircle2, XCircle } from 'lucide-react'
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { useStore } from '../store/useStore'
 
@@ -68,6 +69,25 @@ function FactorBar({ pct, color }:{ pct:number; color:string }) {
 export default function ResultsPage() {
   const nav = useNavigate()
   const { predictionResult, user } = useStore()
+  const [copied, setCopied] = useState(false)
+
+  function handleSavePDF() {
+    window.print()
+  }
+
+  async function handleShare() {
+    const url  = window.location.href
+    const text = `Analyse EDSC-V 2018 — Désir de fécondité au Cameroun\n` +
+                 `Résultat : ${res.desireEnfant ? 'Désire un enfant supplémentaire' : 'Ne désire pas d\'enfant supplémentaire'}\n` +
+                 `Confiance du modèle : ${res.confidence}%`
+    if (typeof navigator.share === 'function') {
+      try { await navigator.share({ title:'Analyse EDSC-V 2018', text, url }) } catch { /* annulé */ }
+    } else {
+      await navigator.clipboard.writeText(url)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2500)
+    }
+  }
 
   const res = predictionResult ?? {
     confidence: 84, desireEnfant: true, probability: 0.84,
@@ -119,7 +139,7 @@ export default function ResultsPage() {
     <div style={{ background:BG, minHeight:'100vh', fontFamily:"'Inter',sans-serif" }}>
 
       {/* ── Top bar ── */}
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'16px 28px', background:'transparent' }}>
+      <div className="no-print" style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'16px 28px', background:'transparent' }}>
         <div style={{ width:36, height:36, background:'white', borderRadius:10, display:'flex', alignItems:'center', justifyContent:'center', border:`1px solid ${BORD}` }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={P} strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
         </div>
@@ -153,18 +173,19 @@ export default function ResultsPage() {
           {/* Text */}
           <div style={{ flex:1 }}>
             <h1 style={{ fontSize:30, fontWeight:900, color:NAVY, letterSpacing:'-0.04em', marginBottom:12, lineHeight:1.2 }}>
-              Votre Vision Sereine
+              Votre Résultat de Simulation
             </h1>
             <p style={{ fontSize:14, color:MUTED, lineHeight:1.75, marginBottom:24, maxWidth:560 }}>
-              Basé sur l'analyse approfondie de 24 indicateurs socio-économiques au Cameroun, votre profil de projection affiche une stabilité supérieure à la moyenne régionale.
+              Le modèle a analysé votre profil et l'a comparé à 13 527 femmes camerounaises de 15 à 49 ans issues de l'EDSC-V 2018. Voici ce que les données révèlent sur votre situation.
             </p>
-            <div style={{ display:'flex', alignItems:'center', gap:14, flexWrap:'wrap' }}>
-              <button onClick={() => nav('/dashboard')}
+            <div className="no-print" style={{ display:'flex', alignItems:'center', gap:14, flexWrap:'wrap' }}>
+              <button onClick={handleSavePDF}
                 style={{ display:'flex', alignItems:'center', gap:8, padding:'12px 24px', background:P, color:'white', border:'none', borderRadius:999, fontSize:14, fontWeight:700, cursor:'pointer', fontFamily:'inherit', boxShadow:`0 4px 16px ${P}44` }}>
-                <Save size={15}/> Sauvegarder mon rapport
+                <Save size={15}/> Sauvegarder en PDF
               </button>
-              <button style={{ display:'flex', alignItems:'center', gap:8, background:'none', border:'none', fontSize:14, fontWeight:600, color:P, cursor:'pointer', fontFamily:'inherit' }}>
-                <Share2 size={15}/> Partager l'analyse
+              <button onClick={handleShare}
+                style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 20px', background:copied?'#ECFDF5':'white', border:`1.5px solid ${copied?'#86EFAC':BORD}`, borderRadius:999, fontSize:14, fontWeight:600, color:copied?'#15803D':P, cursor:'pointer', fontFamily:'inherit', transition:'all 0.3s' }}>
+                {copied ? <><Check size={15}/> Lien copié !</> : <><Share2 size={15}/> Partager l'analyse</>}
               </button>
             </div>
           </div>
@@ -198,18 +219,21 @@ export default function ResultsPage() {
               <div style={{ width:36, height:36, background:PLT, borderRadius:10, display:'flex', alignItems:'center', justifyContent:'center' }}>
                 <Sparkles size={18} color={P} />
               </div>
-              <h3 style={{ fontSize:16, fontWeight:800, color:NAVY, margin:0 }}>Analyse du modèle EDSC-V</h3>
+              <h3 style={{ fontSize:16, fontWeight:800, color:NAVY, margin:0 }}>Que prédit le modèle ?</h3>
             </div>
 
             {/* Résultat principal */}
             <div style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 16px', background: res.desireEnfant ? '#F0FFF4' : '#FFF7ED', borderRadius:12, marginBottom:16, border:`1px solid ${res.desireEnfant ? '#86EFAC' : '#FCD34D'}` }}>
-              <span style={{ fontSize:22 }}>{res.desireEnfant ? '✅' : '⭕'}</span>
+              {res.desireEnfant
+                ? <CheckCircle2 size={28} color="#16A34A" strokeWidth={2} style={{ flexShrink:0 }} />
+                : <XCircle      size={28} color="#D97706" strokeWidth={2} style={{ flexShrink:0 }} />}
               <div>
                 <p style={{ fontSize:14, fontWeight:800, color:NAVY, margin:0 }}>
-                  {res.desireEnfant ? 'Désire un enfant supplémentaire' : 'Ne désire pas d\'enfant supplémentaire'}
+                  {res.desireEnfant ? 'Vous désireriez probablement un enfant supplémentaire' : 'Vous ne désireriez probablement pas d\'enfant supplémentaire'}
                 </p>
-                <p style={{ fontSize:12, color:MUTED, margin:'2px 0 0' }}>
-                  Probabilité : <strong>{Math.round((res.probability ?? 0) * 100)}%</strong> — Confiance : <strong>{res.confidence}%</strong>
+                <p style={{ fontSize:12, color:MUTED, margin:'4px 0 0' }}>
+                  Le modèle estime cette probabilité à <strong>{Math.round((res.probability ?? 0) * 100)}%</strong>.
+                  Niveau de certitude du modèle : <strong>{res.confidence}%</strong>
                 </p>
               </div>
             </div>
@@ -234,7 +258,7 @@ export default function ResultsPage() {
             {/* Importance des variables */}
             {res.featureImportances && Object.keys(res.featureImportances).length > 0 && (
               <div style={{ borderTop:`1px solid ${BORD}`, paddingTop:14 }}>
-                <p style={{ fontSize:11, fontWeight:700, color:MUTED, textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:10 }}>Importance des variables</p>
+                <p style={{ fontSize:11, fontWeight:700, color:MUTED, textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:10 }}>Facteurs les plus déterminants</p>
                 {(Object.entries(res.featureImportances ?? {}) as [string, number][])
                   .sort(([, a], [, b]) => b - a)
                   .slice(0, 5)
@@ -314,9 +338,9 @@ export default function ResultsPage() {
         <motion.div variants={fadeUp} style={{ marginTop:16, background:'white', borderRadius:14, padding:'13px 18px', border:`1px solid ${BORD}`, display:'flex', gap:10, alignItems:'center' }}>
           <span style={{ fontSize:18, flexShrink:0 }}>🇨🇲</span>
           <p style={{ fontSize:12, color:MUTED, margin:0, lineHeight:1.5 }}>
-            <strong style={{ color:NAVY }}>Source :</strong> Enquête Démographique et de Santé du Cameroun (EDSC-V 2018) · INS · Régression logistique sur 150 000+ femmes de 15–49 ans.
+            <strong style={{ color:NAVY }}>Source :</strong> Enquête Démographique et de Santé du Cameroun (EDSC-V 2018) · INS · Modèle Random Forest entraîné sur 13 527 femmes de 15–49 ans.
           </p>
-          <button onClick={() => nav('/simulation')}
+          <button onClick={() => nav('/simulation')} className="no-print"
             style={{ marginLeft:'auto', flexShrink:0, padding:'7px 16px', background:PLT, border:`1px solid ${P}22`, borderRadius:999, fontSize:12, fontWeight:700, color:P, cursor:'pointer', fontFamily:'inherit', whiteSpace:'nowrap' }}>
             Nouvelle simulation
           </button>
@@ -327,6 +351,14 @@ export default function ResultsPage() {
       <style>{`
         @media(max-width:900px){ .bottom-grid{grid-template-columns:1fr!important;} }
         @media(max-width:640px){ .factors-grid{grid-template-columns:1fr!important;} }
+        @media print {
+          .no-print { display:none !important; }
+          body { background:white !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+          * { box-shadow:none !important; }
+          @page { margin:18mm 14mm; size:A4 portrait; }
+          .bottom-grid { grid-template-columns:1fr 1fr !important; }
+          .factors-grid { grid-template-columns:repeat(3,1fr) !important; }
+        }
       `}</style>
     </div>
   )

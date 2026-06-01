@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Home, TrendingUp, Clock, Settings, Check,
-  Info, ChevronLeft, ChevronRight
+  Info, ChevronLeft, ChevronRight, Heart, Lightbulb, Sparkles, Scale
 } from 'lucide-react'
 import { useStore, INSTRUCTION_MAP, MILIEU_MAP } from '../store/useStore'
 import { api } from '../lib/api'
@@ -66,6 +66,9 @@ export default function OnboardingPage() {
   const [quintile,          setQuintile]          = useState<Quintile|null>(null)
   const [statutMatrimonial, setStatutMatrimonial] = useState<number>(2) // 2 = Marié(e) par défaut
   const [contraceptif,      setContraceptif]      = useState<number>(0)
+  const [travail,           setTravail]           = useState<number>(0)
+  const [regionNord,        setRegionNord]        = useState<number>(0)
+  const [religionMusulman,  setReligionMusulman]  = useState<number>(0)
   const [analyzing,         setAnalyzing]         = useState(false)
   const [simError,          setSimError]          = useState<string|null>(null)
 
@@ -87,7 +90,7 @@ export default function OnboardingPage() {
     }
 
     // Étape finale : appel réel à l'API
-    const simData = { age, nbEnfants, instruction:instruction!, milieu:milieu!, quintile:quintile!, statutMatrimonial, contraceptif }
+    const simData = { age, nbEnfants, instruction:instruction!, milieu:milieu!, quintile:quintile!, statutMatrimonial, contraceptif, travail, regionNord, religionMusulman }
     setSimData(simData)
     setAnalyzing(true)
     setSimError(null)
@@ -101,6 +104,9 @@ export default function OnboardingPage() {
         statut_matrimonial: statutMatrimonial,
         milieu_residence:   MILIEU_MAP[milieu!],
         quintile_richesse:  quintile!,
+        travail,
+        region_nord:        regionNord,
+        religion_musulman:  religionMusulman,
       }
 
       // Créer la simulation ET récupérer les insights complets en parallèle
@@ -171,7 +177,7 @@ export default function OnboardingPage() {
         {/* Logo */}
         <div onClick={()=>nav('/')} style={{ display:'flex', alignItems:'center', gap:8, marginBottom:36, cursor:'pointer' }}>
           <div style={{ width:34, height:34, background:P, borderRadius:9, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-            <span style={{ fontSize:17 }}>🔗</span>
+            <Heart size={17} color={sm.dark?'white':P} strokeWidth={2.5} />
           </div>
           <span style={{ fontWeight:900, fontSize:18, color:sm.dark?'white':P, letterSpacing:'-0.03em' }}>Hearth</span>
         </div>
@@ -251,7 +257,7 @@ export default function OnboardingPage() {
                 </div>
 
                 {/* Right form area */}
-                <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', padding:'32px 40px', overflowY:'auto' }}>
+                <div className="mob-step-area" style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', padding:'32px 40px', overflowY:'auto' }}>
                   <div style={{ width:'100%', maxWidth:460 }}>
                     <span style={{ display:'inline-block', fontSize:11, fontWeight:700, color:P, background:PLT, padding:'5px 14px', borderRadius:999, marginBottom:20, letterSpacing:'0.05em' }}>
                       Étape initiale
@@ -288,9 +294,11 @@ export default function OnboardingPage() {
                     </div>
 
                     {/* Info box */}
-                    <InfoBox icon="💡">
-                      <strong>Pourquoi cette limite ?</strong> L'étude se concentre sur les années de vie reproductive et active, allant de l'adolescence à la fin de la quarantaine.
-                    </InfoBox>
+                    <div style={{ marginBottom:8 }}>
+                      <InfoBox icon={<Lightbulb size={15} color={P} />}>
+                        <strong>Pourquoi cette limite ?</strong> L'étude se concentre sur les années de vie reproductive et active, allant de l'adolescence à la fin de la quarantaine.
+                      </InfoBox>
+                    </div>
 
                     <NavBtns onBack={goBack} onNext={goNext} canNext={true} nextLabel="Suivant" />
                   </div>
@@ -300,7 +308,7 @@ export default function OnboardingPage() {
 
             {/* ── STEP 2: CHILDREN ── */}
             {step===1 && (
-              <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', padding:'40px 60px', overflowY:'auto', background:BG }}>
+              <div className="mob-step-area" style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', padding:'40px 60px', overflowY:'auto', background:BG }}>
                 <div style={{ width:'100%', maxWidth:560 }}>
                   <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:20 }}>
                     <span style={{ fontSize:11, fontWeight:700, color:P, background:PLT, padding:'4px 12px', borderRadius:999, letterSpacing:'0.06em' }}>ÉTAPE 02 SUR 05</span>
@@ -335,7 +343,7 @@ export default function OnboardingPage() {
                   {/* Statut matrimonial */}
                   <div style={{ background:'white', borderRadius:16, padding:'18px 20px', border:`1.5px solid ${BORD}`, marginBottom:16 }}>
                     <p style={{ fontSize:13, fontWeight:700, color:NAVY, marginBottom:12 }}>Statut matrimonial</p>
-                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
+                    <div className="stat-mat-grid" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
                       {[
                         { v:1, label:'Célibataire' },
                         { v:2, label:'Marié(e)' },
@@ -352,7 +360,7 @@ export default function OnboardingPage() {
                   </div>
 
                   {/* Utilisation contraceptif */}
-                  <div style={{ background:'white', borderRadius:16, padding:'16px 20px', border:`1.5px solid ${BORD}`, marginBottom:20, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                  <div style={{ background:'white', borderRadius:16, padding:'16px 20px', border:`1.5px solid ${BORD}`, marginBottom:10, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                     <div>
                       <p style={{ fontSize:13, fontWeight:700, color:NAVY, margin:0 }}>Utilisation d'un contraceptif</p>
                       <p style={{ fontSize:11, color:MUTED, margin:'3px 0 0' }}>Méthode moderne ou traditionnelle</p>
@@ -363,7 +371,19 @@ export default function OnboardingPage() {
                     </button>
                   </div>
 
-                  <InfoBox icon="💡">
+                  {/* Travail (emploi) */}
+                  <div style={{ background:'white', borderRadius:16, padding:'16px 20px', border:`1.5px solid ${BORD}`, marginBottom:20, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                    <div>
+                      <p style={{ fontSize:13, fontWeight:700, color:NAVY, margin:0 }}>Activité professionnelle</p>
+                      <p style={{ fontSize:11, color:MUTED, margin:'3px 0 0' }}>Exercez-vous un emploi actuellement ?</p>
+                    </div>
+                    <button onClick={()=>setTravail(t=>t===0?1:0)} type="button"
+                      style={{ width:48, height:26, borderRadius:999, border:'none', background:travail===1?P:BORD, cursor:'pointer', position:'relative', transition:'background 0.2s', flexShrink:0 }}>
+                      <div style={{ position:'absolute', top:3, left:travail===1?'calc(100% - 23px)':3, width:20, height:20, borderRadius:'50%', background:'white', transition:'left 0.2s', boxShadow:'0 1px 4px rgba(0,0,0,0.2)' }} />
+                    </button>
+                  </div>
+
+                  <InfoBox icon={<Lightbulb size={15} color={P} />}>
                     <strong>Le saviez-vous ?</strong> Au Cameroun, les femmes ayant moins de 3 enfants expriment en moyenne un désir plus fort d'en avoir d'autres (EDSC-V 2018).
                   </InfoBox>
 
@@ -415,19 +435,15 @@ export default function OnboardingPage() {
                     Saviez-vous qu'en moyenne, un diplôme universitaire augmente votre espérance de vie virtuelle de 12% dans notre modèle ?
                   </InfoBox>
 
-                  {/* User profile */}
-                  <div style={{ display:'flex', alignItems:'center', gap:10, marginTop:20, padding:'10px 0', borderTop:`1px solid ${BORD}` }}>
-                    <div style={{ width:34, height:34, borderRadius:'50%', background:PLT, display:'flex', alignItems:'center', justifyContent:'center', fontSize:16 }}>👤</div>
-                    <div>
-                      <p style={{ fontSize:13, fontWeight:700, color:NAVY, margin:0 }}>Marie N.</p>
-                      <p style={{ fontSize:11, color:MUTED, margin:0 }}>Premium Plan</p>
-                    </div>
-                  </div>
                 </div>
 
                 {/* Right: card grid */}
-                <div style={{ flex:1, padding:'40px', overflowY:'auto', display:'flex', flexDirection:'column' }}>
-                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, flex:1 }}>
+                <div className="mob-step-area" style={{ flex:1, padding:'40px', overflowY:'auto', display:'flex', flexDirection:'column' }}>
+                  {/* Titre visible uniquement sur mobile (edu-left est caché) */}
+                  <h2 className="edu-mobile-h" style={{ display:'none', fontSize:22, fontWeight:900, color:NAVY, letterSpacing:'-0.03em', marginBottom:20, lineHeight:1.2 }}>
+                    Quel est votre niveau d'études ?
+                  </h2>
+                  <div className="edu-grid" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, flex:1 }}>
                     {EDU.map(({ v, label, sub, img }) => (
                       <motion.button key={v} onClick={()=>setInstruction(v)} whileTap={{ scale:0.98 }}
                         style={{
@@ -456,53 +472,79 @@ export default function OnboardingPage() {
                       </motion.button>
                     ))}
                   </div>
-                  <div style={{ paddingTop:24, display:'flex', justifyContent:'space-between', gap:12 }}>
-                    <NavBtns onBack={goBack} onNext={goNext} canNext={instruction!==null} nextLabel="CONTINUER" reverse />
-                  </div>
+                    <NavBtns onBack={goBack} onNext={goNext} canNext={instruction!==null} nextLabel="Continuer" />
                 </div>
               </>
             )}
 
             {/* ── STEP 4: RESIDENCE ── */}
             {step===3 && (
-              <div style={{ flex:1, display:'flex', flexDirection:'column', padding:'40px 48px', overflowY:'auto' }}>
-                <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:24 }}>
-                  <span style={{ fontSize:11, fontWeight:700, color:P, background:PLT, padding:'4px 12px', borderRadius:999, letterSpacing:'0.06em' }}>ÉTAPE 04 SUR 05</span>
-                  <span style={{ fontSize:12, color:MUTED }}>Milieu de résidence</span>
-                </div>
-                <h1 style={{ fontSize:38, fontWeight:900, color:NAVY, letterSpacing:'-0.04em', lineHeight:1.1, marginBottom:10 }}>
-                  Où habitez-vous ?
-                </h1>
-                <p style={{ fontSize:14, color:MUTED, lineHeight:1.65, marginBottom:32, maxWidth:560 }}>
-                  Votre milieu de résidence influence fortement l'accès aux services de santé, les normes sociales et la planification familiale au Cameroun.
-                </p>
+              <div style={{ flex:1, display:'flex', justifyContent:'center', overflowY:'auto' }}>
+                <div className="mob-step-area" style={{ width:'100%', maxWidth:720, padding:'40px 48px', display:'flex', flexDirection:'column' }}>
 
-                {/* Residence cards */}
-                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:18, marginBottom:32, maxWidth:700 }} className="res-grid">
-                  {MILIEU.map(({ v, label, sub, img })=>(
-                    <motion.button key={v} onClick={()=>setMilieu(v)} whileTap={{scale:0.98}}
-                      style={{ background:'white', border:`2px solid ${milieu===v?P:BORD}`, borderRadius:20, padding:0, overflow:'hidden', cursor:'pointer', fontFamily:'inherit', textAlign:'left', boxShadow:milieu===v?`0 8px 28px ${P}28`:'0 2px 10px rgba(0,0,0,0.05)', transition:'all 0.2s', position:'relative' }}>
-                      {milieu===v && (
-                        <div style={{ position:'absolute', top:12, right:12, width:28, height:28, background:P, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', zIndex:2 }}>
-                          <Check size={14} color="white" strokeWidth={3} />
+                  <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:24 }}>
+                    <span style={{ fontSize:11, fontWeight:700, color:P, background:PLT, padding:'4px 12px', borderRadius:999, letterSpacing:'0.06em' }}>ÉTAPE 04 SUR 05</span>
+                    <span style={{ fontSize:12, color:MUTED }}>Milieu de résidence</span>
+                  </div>
+                  <h1 style={{ fontSize:38, fontWeight:900, color:NAVY, letterSpacing:'-0.04em', lineHeight:1.1, marginBottom:10 }}>
+                    Où habitez-vous ?
+                  </h1>
+                  <p style={{ fontSize:14, color:MUTED, lineHeight:1.65, marginBottom:32 }}>
+                    Votre milieu de résidence influence fortement l'accès aux services de santé, les normes sociales et la planification familiale au Cameroun.
+                  </p>
+
+                  {/* Residence cards */}
+                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:18, marginBottom:24 }} className="res-grid">
+                    {MILIEU.map(({ v, label, sub, img })=>(
+                      <motion.button key={v} onClick={()=>setMilieu(v)} whileTap={{scale:0.98}}
+                        style={{ background:'white', border:`2px solid ${milieu===v?P:BORD}`, borderRadius:20, padding:0, overflow:'hidden', cursor:'pointer', fontFamily:'inherit', textAlign:'left', boxShadow:milieu===v?`0 8px 28px ${P}28`:'0 2px 10px rgba(0,0,0,0.05)', transition:'all 0.2s', position:'relative' }}>
+                        {milieu===v && (
+                          <div style={{ position:'absolute', top:12, right:12, width:28, height:28, background:P, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', zIndex:2 }}>
+                            <Check size={14} color="white" strokeWidth={3} />
+                          </div>
+                        )}
+                        <div style={{ height:180, overflow:'hidden' }}>
+                          <img src={img} alt={label} style={{ width:'100%', height:'100%', objectFit:'cover', display:'block', transition:'transform 0.3s' }} />
                         </div>
-                      )}
-                      <div style={{ height:180, overflow:'hidden' }}>
-                        <img src={img} alt={label} style={{ width:'100%', height:'100%', objectFit:'cover', display:'block', transition:'transform 0.3s' }} />
-                      </div>
-                      <div style={{ padding:'16px 18px' }}>
-                        <p style={{ fontSize:16, fontWeight:800, color:milieu===v?P:NAVY, marginBottom:5 }}>{label}</p>
-                        <p style={{ fontSize:13, color:MUTED, lineHeight:1.5, margin:0 }}>{sub}</p>
-                      </div>
-                    </motion.button>
-                  ))}
-                </div>
+                        <div style={{ padding:'16px 18px' }}>
+                          <p style={{ fontSize:16, fontWeight:800, color:milieu===v?P:NAVY, marginBottom:5 }}>{label}</p>
+                          <p style={{ fontSize:13, color:MUTED, lineHeight:1.5, margin:0 }}>{sub}</p>
+                        </div>
+                      </motion.button>
+                    ))}
+                  </div>
 
-                <InfoBox icon="💡">
-                  <strong>Impact sur la simulation :</strong> Le milieu de résidence est l'un des 5 facteurs clés dans le modèle prédictif EDSC-V. Les femmes rurales expriment un désir d'enfants plus élevé.
-                </InfoBox>
+                  <InfoBox icon={<Lightbulb size={15} color={P} />}>
+                    <strong>Impact sur la simulation :</strong> Le milieu de résidence est l'un des 5 facteurs clés dans le modèle prédictif EDSC-V. Les femmes rurales expriment un désir d'enfants plus élevé.
+                  </InfoBox>
 
-                <div style={{ marginTop:28 }}>
+                  {/* Contexte socioculturel */}
+                  <div style={{ marginTop:20, background:'white', borderRadius:18, padding:'18px 20px', border:`1.5px solid ${BORD}` }}>
+                    <p style={{ fontSize:13, fontWeight:700, color:NAVY, marginBottom:14 }}>Contexte socioculturel</p>
+
+                    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
+                      <div>
+                        <p style={{ fontSize:13, fontWeight:600, color:NAVY, margin:0 }}>Région septentrionale</p>
+                        <p style={{ fontSize:11, color:MUTED, margin:'2px 0 0' }}>Adamaoua, Extrême-Nord ou Nord</p>
+                      </div>
+                      <button onClick={()=>setRegionNord(r=>r===0?1:0)} type="button"
+                        style={{ width:48, height:26, borderRadius:999, border:'none', background:regionNord===1?P:BORD, cursor:'pointer', position:'relative', transition:'background 0.2s', flexShrink:0 }}>
+                        <div style={{ position:'absolute', top:3, left:regionNord===1?'calc(100% - 23px)':3, width:20, height:20, borderRadius:'50%', background:'white', transition:'left 0.2s', boxShadow:'0 1px 4px rgba(0,0,0,0.2)' }} />
+                      </button>
+                    </div>
+
+                    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                      <div>
+                        <p style={{ fontSize:13, fontWeight:600, color:NAVY, margin:0 }}>Religion musulmane</p>
+                        <p style={{ fontSize:11, color:MUTED, margin:'2px 0 0' }}>Pratique de l'islam</p>
+                      </div>
+                      <button onClick={()=>setReligionMusulman(r=>r===0?1:0)} type="button"
+                        style={{ width:48, height:26, borderRadius:999, border:'none', background:religionMusulman===1?P:BORD, cursor:'pointer', position:'relative', transition:'background 0.2s', flexShrink:0 }}>
+                        <div style={{ position:'absolute', top:3, left:religionMusulman===1?'calc(100% - 23px)':3, width:20, height:20, borderRadius:'50%', background:'white', transition:'left 0.2s', boxShadow:'0 1px 4px rgba(0,0,0,0.2)' }} />
+                      </button>
+                    </div>
+                  </div>
+
                   <NavBtns onBack={goBack} onNext={goNext} canNext={milieu!==null} nextLabel="Continuer" />
                 </div>
               </div>
@@ -544,7 +586,7 @@ export default function OnboardingPage() {
                   {/* AI insight box */}
                   <div style={{ background:PLT, borderRadius:14, padding:'14px', border:`1px solid ${P}22`, marginTop:20 }}>
                     <div style={{ display:'flex', alignItems:'center', gap:7, marginBottom:6 }}>
-                      <div style={{ width:22, height:22, background:P, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11 }}>✨</div>
+                      <div style={{ width:22, height:22, background:P, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center' }}><Sparkles size={11} color="white" /></div>
                       <span style={{ fontSize:10, fontWeight:800, color:P, textTransform:'uppercase', letterSpacing:'0.08em' }}>AI INSIGHT</span>
                     </div>
                     <p style={{ fontSize:12, color:'#5050A0', lineHeight:1.55, margin:0, fontStyle:'italic' }}>
@@ -554,7 +596,7 @@ export default function OnboardingPage() {
                 </div>
 
                 {/* Right main content */}
-                <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', padding:'40px 48px', overflowY:'auto', background:BG }}>
+                <div className="mob-step-area" style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', padding:'40px 48px', overflowY:'auto', background:BG }}>
                   <div style={{ width:'100%', maxWidth:640 }}>
                     <h1 style={{ fontSize:40, fontWeight:900, color:NAVY, letterSpacing:'-0.04em', textAlign:'center', marginBottom:12 }}>
                       Où vous situez-vous ?
@@ -570,7 +612,7 @@ export default function OnboardingPage() {
                     {quintile && (
                       <motion.div initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{duration:0.3}}
                         style={{ background:'white', borderRadius:18, padding:'18px 22px', border:`1.5px solid ${BORD}`, boxShadow:'0 4px 20px rgba(59,58,219,0.08)', marginBottom:20, display:'flex', gap:14, alignItems:'flex-start' }}>
-                        <div style={{ width:36, height:36, background:PLT, borderRadius:10, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:18 }}>⚖️</div>
+                        <div style={{ width:36, height:36, background:PLT, borderRadius:10, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}><Scale size={18} color={P} /></div>
                         <div>
                           <p style={{ fontSize:15, fontWeight:800, color:NAVY, margin:0, marginBottom:5 }}>{QUIN[quintile-1].label} — Quintile {quintile}</p>
                           <p style={{ fontSize:13, color:MUTED, lineHeight:1.6, margin:0 }}>{QUIN[quintile-1].desc}</p>
@@ -596,7 +638,13 @@ export default function OnboardingPage() {
                       </motion.div>
                     )}
 
-                    <NavBtns onBack={goBack} onNext={goNext} canNext={quintile!==null} nextLabel="Confirmer & Continuer" />
+                    {simError && (
+                      <div style={{ padding:'10px 14px', background:'#FEF2F2', border:'1px solid #FECACA', borderRadius:10, marginBottom:12, fontSize:12, color:'#B91C1C' }}>
+                        ⚠️ {simError}
+                      </div>
+                    )}
+
+                    <NavBtns onBack={goBack} onNext={goNext} canNext={quintile!==null} nextLabel="Confirmer & Analyser" />
                   </div>
                 </div>
               </>
@@ -619,14 +667,19 @@ export default function OnboardingPage() {
 
       <style>{`
         @media(max-width:900px) {
-          .sim-sidebar { display:none!important; }
-          .img-panel   { display:none!important; }
-          .edu-left    { width:100%!important; border-right:none!important; }
-          .quin-left   { display:none!important; }
-          .mob-header  { display:flex!important; }
+          .sim-sidebar   { display:none!important; }
+          .img-panel     { display:none!important; }
+          .edu-left      { display:none!important; }
+          .quin-left     { display:none!important; }
+          .mob-header    { display:flex!important; }
+          .mob-step-area { padding-top:72px!important; }
+          .edu-mobile-h  { display:block!important; }
         }
         @media(max-width:640px) {
-          .res-grid { grid-template-columns:1fr!important; }
+          .res-grid      { grid-template-columns:1fr!important; }
+          .edu-grid      { grid-template-columns:1fr!important; }
+          .stat-mat-grid { grid-template-columns:1fr!important; }
+          .mob-step-area { padding-left:20px!important; padding-right:20px!important; }
         }
         input[type=range] { -webkit-appearance:none; margin:0; background:transparent; cursor:pointer; }
         input[type=range]:focus { outline:none; }
@@ -678,19 +731,37 @@ function QuintileTrack({ selected, onSelect }: { selected:Quintile|null; onSelec
 }
 
 // ── NavBtns ───────────────────────────────────────────────────────────────────
-function NavBtns({ onBack, onNext, canNext, nextLabel, reverse }: {
-  onBack:()=>void; onNext:()=>void; canNext:boolean; nextLabel:string; reverse?:boolean
+function NavBtns({ onBack, onNext, canNext, nextLabel }: {
+  onBack:()=>void; onNext:()=>void; canNext:boolean; nextLabel:string
 }) {
   return (
-    <div style={{ display:'flex', gap:12, flexDirection:reverse?'row-reverse':'row' }}>
+    <div style={{ display:'flex', justifyContent:'center', gap:12, marginTop:32 }}>
       <button onClick={onBack}
-        style={{ display:'flex', alignItems:'center', gap:6, padding:'13px 24px', background:'white', border:`1.5px solid ${BORD}`, borderRadius:999, fontSize:14, fontWeight:600, cursor:'pointer', fontFamily:'inherit', color:NAVY, transition:'border-color 0.15s' }}
-        onMouseOver={e=>(e.currentTarget.style.borderColor=P)} onMouseOut={e=>(e.currentTarget.style.borderColor=BORD)}>
-        <ChevronLeft size={16} /> Précédent
+        style={{
+          display:'flex', alignItems:'center', justifyContent:'center', gap:6,
+          padding:'0 28px', height:52, minWidth:160, flexShrink:0,
+          background:'white', border:`1.5px solid ${BORD}`, borderRadius:999,
+          fontSize:14, fontWeight:600, cursor:'pointer', fontFamily:'inherit',
+          color:NAVY, transition:'all 0.2s',
+        }}
+        onMouseOver={e=>{e.currentTarget.style.borderColor=P; e.currentTarget.style.color=P; e.currentTarget.style.background=PLT}}
+        onMouseOut={e=>{e.currentTarget.style.borderColor=BORD; e.currentTarget.style.color=NAVY; e.currentTarget.style.background='white'}}>
+        <ChevronLeft size={16}/> Précédent
       </button>
       <button onClick={onNext} disabled={!canNext}
-        style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:6, padding:'13px 28px', background:canNext?P:'#D0D0E8', border:'none', borderRadius:999, fontSize:14, fontWeight:700, cursor:canNext?'pointer':'not-allowed', fontFamily:'inherit', color:'white', boxShadow:canNext?`0 6px 20px ${P}44`:'none', transition:'all 0.2s' }}>
-        {nextLabel} <ChevronRight size={16} />
+        style={{
+          display:'flex', alignItems:'center', justifyContent:'center', gap:8,
+          padding:'0 36px', height:52, minWidth:220,
+          background: canNext ? `linear-gradient(135deg,${P} 0%,#6B5FEF 100%)` : '#D8D8F0',
+          border:'none', borderRadius:999, fontSize:14, fontWeight:700,
+          cursor: canNext ? 'pointer' : 'not-allowed',
+          fontFamily:'inherit', color: canNext ? 'white' : '#A0A0C0',
+          boxShadow: canNext ? `0 8px 24px ${P}40` : 'none',
+          transition:'all 0.2s', transform:'translateY(0)',
+        }}
+        onMouseOver={e=>{ if(canNext){ (e.currentTarget as HTMLElement).style.transform='translateY(-1px)'; (e.currentTarget as HTMLElement).style.boxShadow=`0 12px 32px ${P}55` }}}
+        onMouseOut={e=>{ (e.currentTarget as HTMLElement).style.transform='translateY(0)'; (e.currentTarget as HTMLElement).style.boxShadow=canNext?`0 8px 24px ${P}40`:'none' }}>
+        {nextLabel} <ChevronRight size={16}/>
       </button>
     </div>
   )

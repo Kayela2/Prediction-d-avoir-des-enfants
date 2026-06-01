@@ -91,6 +91,14 @@ df['desir_lbl'] = df['desir_enfant_bin'].map(
 
 df['travail_lbl'] = df['travail'].map({0: 'Non', 1: 'Oui'})
 
+# Nouvelles variables binaires (clivage démographique camerounais)
+# Régions septentrionales : Adamaoua (1), Extrême-Nord (4), Nord (6)
+df['region_nord']       = df['region'].isin([1, 4, 6]).astype(int)
+df['region_nord_lbl']   = df['region_nord'].map({1: 'Septentrional', 0: 'Autre region'})
+# Religion musulmane
+df['religion_musulman'] = (df['religion'] == 4).astype(int)
+df['religion_musulman_lbl'] = df['religion_musulman'].map({1: 'Musulmane', 0: 'Non musulmane'})
+
 n_total = len(df)
 print(f"Effectif total analyse : {n_total:,} femmes")
 print(f"Desire un enfant : {df['desir_enfant_bin'].mean()*100:.1f}%")
@@ -180,6 +188,9 @@ vars_biv = {
     "Religion"             : 'religion_lbl',
     "Quintile de richesse" : 'quintile_lbl',
     "Utilisation contraceptif": 'contraceptif_lbl',
+    "Emploi (travail)"     : 'travail_lbl',
+    "Region septentrionale": 'region_nord_lbl',
+    "Religion musulmane"   : 'religion_musulman_lbl',
 }
 
 rows_biv = []
@@ -272,8 +283,8 @@ print("TABLE 4 : REGRESSION LOGISTIQUE BINAIRE")
 print("="*60)
 
 vars_modele = ['age', 'niveau_instruction', 'nb_enfants_vivants',
-               'contraceptif_bin', 'statut_matrimonial',
-               'milieu_residence', 'quintile_richesse']
+               'contraceptif_bin', 'statut_matrimonial', 'milieu_residence',
+               'quintile_richesse', 'travail', 'region_nord', 'religion_musulman']
 
 labels_vars = {
     'const'               : 'Constante',
@@ -284,6 +295,9 @@ labels_vars = {
     'statut_matrimonial'  : 'Statut matrimonial',
     'milieu_residence'    : 'Milieu de residence',
     'quintile_richesse'   : 'Quintile de richesse',
+    'travail'             : 'Emploi (travail)',
+    'region_nord'         : 'Region septentrionale',
+    'religion_musulman'   : 'Religion musulmane',
 }
 
 df_mod = df[vars_modele + ['desir_enfant_bin']].dropna()

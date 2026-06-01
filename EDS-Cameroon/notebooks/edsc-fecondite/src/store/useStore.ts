@@ -20,6 +20,9 @@ interface SimPayload {
   statut_matrimonial: number
   milieu_residence: number
   quintile_richesse: number
+  travail: number
+  region_nord: number
+  religion_musulman: number
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -39,6 +42,9 @@ function mapSimulation(s: any): Simulation {
     statut_matrimonial:s.statut_matrimonial,
     milieu_residence:  s.milieu_residence,
     quintile_richesse: s.quintile_richesse,
+    travail:           s.travail ?? 0,
+    region_nord:       s.region_nord ?? 0,
+    religion_musulman: s.religion_musulman ?? 0,
     desire_enfant:     s.desire_enfant,
     probability:       s.probability,
     model_used:        s.model_used,

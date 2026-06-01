@@ -9,6 +9,9 @@ class PredictionRequest(BaseModel):
     statut_matrimonial: int
     milieu_residence: int
     quintile_richesse: int
+    travail: int = 0           # 0=Non  1=Oui
+    region_nord: int = 0       # 1=Région septentrionale (Adamaoua/Extrême-Nord/Nord)
+    religion_musulman: int = 0 # 1=Musulmane
 
 
 class PredictionResponse(BaseModel):

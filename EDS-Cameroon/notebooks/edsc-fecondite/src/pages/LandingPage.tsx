@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowRight, ChevronRight, BarChart2, ShieldCheck, Globe, Sparkles, CheckCircle, Users, Database, Target } from 'lucide-react'
+import { ArrowRight, ChevronRight, BarChart2, ShieldCheck, Globe, Sparkles, CheckCircle, Users, Database, Target, Heart, Lock, FileText } from 'lucide-react'
 
 const fadeUp  = { hidden: { opacity: 0, y: 28 }, show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: 'easeOut' } } } satisfies import('framer-motion').Variants
 const stagger = { show: { transition: { staggerChildren: 0.1 } } } satisfies import('framer-motion').Variants
@@ -9,7 +9,7 @@ const features = [
   { icon: BarChart2,   c:'#6366F1', bg:'#EEF2FF', title:'Simulation en temps réel',   desc:'Résultat immédiat basé sur vos paramètres de vie actuels.' },
   { icon: ShieldCheck, c:'#10B981', bg:'#ECFDF5', title:'Données anonymisées',        desc:'Aucune donnée personnelle transmise. Traitement local uniquement.' },
   { icon: Globe,       c:'#F59E0B', bg:'#FFFBEB', title:'Ancrage camerounais',        desc:'Basé sur l\'Enquête EDSC-V 2018 — l\'enquête nationale de référence.' },
-  { icon: Sparkles,    c:'#8B5CF6', bg:'#F5F3FF', title:'Modèle IA de précision',     desc:'150 000+ profils de femmes camerounaises pour entraîner le modèle.' },
+  { icon: Sparkles,    c:'#8B5CF6', bg:'#F5F3FF', title:'Modèle IA de précision',     desc:'13 527 profils de femmes camerounaises pour entraîner le modèle.' },
 ]
 
 export default function LandingPage() {
@@ -22,7 +22,7 @@ export default function LandingPage() {
       <header style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, background: 'rgba(7,11,24,0.75)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', height: 66, display: 'flex', alignItems: 'center', gap: 36 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }} onClick={() => nav('/')}>
-            <div style={{ width: 38, height: 38, background: 'linear-gradient(135deg,#6366F1,#8B5CF6)', borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 20px rgba(99,102,241,0.55)', fontSize: 19 }}>🔗</div>
+            <div style={{ width: 38, height: 38, background: 'linear-gradient(135deg,#6366F1,#8B5CF6)', borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 20px rgba(99,102,241,0.55)' }}><Heart size={19} color="white" strokeWidth={2.5} /></div>
             <span style={{ fontWeight: 800, fontSize: 19, color: 'white', letterSpacing: '-0.03em' }}>Hearth</span>
           </div>
           <nav className="nav-links" style={{ display: 'flex', gap: 30, flex: 1 }}>
@@ -103,7 +103,7 @@ export default function LandingPage() {
 
             {/* Trust row */}
             <motion.div variants={fadeUp} style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
-              {[{ v:'150 000+', l:'Femmes analysées' }, { v:'98.4%', l:'Précision' }, { v:'5', l:'Facteurs clés' }].map(({ v, l }) => (
+              {[{ v:'13 527', l:'Femmes analysées' }, { v:'93.7%', l:'Précision modèle' }, { v:'10', l:'Facteurs clés' }].map(({ v, l }) => (
                 <div key={l} style={{ display: 'flex', flexDirection: 'column' }}>
                   <span style={{ fontSize: 22, fontWeight: 900, color: 'white', letterSpacing: '-0.03em' }}>{v}</span>
                   <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', fontWeight: 500 }}>{l}</span>
@@ -167,15 +167,15 @@ export default function LandingPage() {
 
               <div className="journey-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 16, position: 'relative', zIndex: 1 }}>
                 {[
-                  { n:'01', emoji:'🌐', title:'Découverte', desc:'Apprenez comment Hearth utilise les données EDSC-V pour votre simulation.', color:'#6366F1' },
-                  { n:'02', emoji:'🔐', title:'Connexion', desc:'Créez un compte ou lancez une simulation anonyme en 30 secondes.', color:'#8B5CF6' },
-                  { n:'03', emoji:'📋', title:'Profil', desc:'Renseignez vos 5 paramètres : âge, résidence, instruction, enfants, revenu.', color:'#06B6D4' },
-                  { n:'04', emoji:'🔮', title:'Analyse IA', desc:'Notre modèle calcule votre probabilité sur 150 000+ profils de référence.', color:'#10B981' },
-                  { n:'05', emoji:'📊', title:'Résultats', desc:'Visualisez votre score, les facteurs clés et les projections futures.', color:'#F59E0B' },
-                ].map(({ n, emoji, title, desc, color }) => (
+                  { n:'01', Icon: Globe,      title:'Découverte',  desc:'Apprenez comment Hearth utilise les données EDSC-V pour votre simulation.',  color:'#6366F1' },
+                  { n:'02', Icon: Lock,       title:'Connexion',   desc:'Créez un compte ou lancez une simulation anonyme en 30 secondes.',           color:'#8B5CF6' },
+                  { n:'03', Icon: FileText,   title:'Profil',      desc:'Renseignez vos paramètres : âge, résidence, instruction, enfants, revenu.',  color:'#06B6D4' },
+                  { n:'04', Icon: Sparkles,   title:'Analyse IA',  desc:'Notre modèle calcule votre probabilité sur 13 527 profils de référence.',    color:'#10B981' },
+                  { n:'05', Icon: BarChart2,  title:'Résultats',   desc:'Visualisez votre score, les facteurs clés et les projections futures.',      color:'#F59E0B' },
+                ].map(({ n, Icon, title, desc, color }) => (
                   <motion.div key={n} variants={fadeUp} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-                    <div style={{ width: 72, height: 72, borderRadius: '50%', background: `${color}18`, border: `2px solid ${color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, marginBottom: 20, boxShadow: `0 0 20px ${color}20` }}>
-                      {emoji}
+                    <div style={{ width: 72, height: 72, borderRadius: '50%', background: `${color}18`, border: `2px solid ${color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20, boxShadow: `0 0 20px ${color}20` }}>
+                      <Icon size={28} color={color} />
                     </div>
                     <span style={{ fontSize: 10, fontWeight: 800, color, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>ÉTAPE {n}</span>
                     <h3 style={{ fontSize: 16, fontWeight: 800, color: 'white', marginBottom: 8 }}>{title}</h3>
@@ -219,10 +219,10 @@ export default function LandingPage() {
       <section id="donnees" style={{ background: '#0F172A', borderTop: '1px solid rgba(255,255,255,0.06)', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '60px 24px' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 32 }} className="stats-grid">
           {[
-            { icon: Database, v:'150 000+', l:'Entrées EDSC-V 2018',   c:'#6366F1' },
-            { icon: Globe,    v:'24',        l:'Régions du Cameroun',  c:'#10B981' },
-            { icon: Target,   v:'98.4 %',    l:'Précision du modèle',  c:'#F59E0B' },
-            { icon: Users,    v:'5',         l:'Facteurs prédictifs',  c:'#8B5CF6' },
+            { icon: Database, v:'13 527',  l:'Femmes EDSC-V 2018',    c:'#6366F1' },
+            { icon: Globe,    v:'10',       l:'Régions du Cameroun',   c:'#10B981' },
+            { icon: Target,   v:'93.7 %',   l:'Précision du modèle',   c:'#F59E0B' },
+            { icon: Users,    v:'10',        l:'Facteurs prédictifs',   c:'#8B5CF6' },
           ].map(({ icon: Icon, v, l, c }) => (
             <motion.div key={l} initial={{ opacity:0, y:20 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }} transition={{ duration:0.5 }}
               style={{ textAlign:'center' }}>
@@ -262,11 +262,11 @@ export default function LandingPage() {
       <footer style={{ background: '#020408', borderTop: '1px solid rgba(255,255,255,0.05)', padding: '40px 24px' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 30, height: 30, background: 'rgba(99,102,241,0.2)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>🔗</div>
+            <div style={{ width: 30, height: 30, background: 'rgba(99,102,241,0.2)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Heart size={14} color="white" strokeWidth={2.5} /></div>
             <span style={{ fontWeight: 800, fontSize: 16, color: 'white' }}>Hearth</span>
           </div>
           <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.2)', textAlign: 'center' }}>
-            © 2024 Hearth · EDSC-V 2018 · INS Cameroun · Thèse Master 1
+            © {new Date().getFullYear()} Hearth · EDSC-V 2018 · INS Cameroun
           </p>
           <div style={{ display: 'flex', gap: 20 }}>
             {['Confidentialité','Conditions','Contact'].map(l => (

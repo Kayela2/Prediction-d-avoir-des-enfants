@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { User, Bell, Shield, Globe, Moon, ChevronRight, LogOut, Camera } from 'lucide-react'
 import { useStore } from '../store/useStore'
@@ -16,7 +17,8 @@ function Toggle({ on, onChange }: { on:boolean; onChange:(v:boolean)=>void }) {
 }
 
 export default function ReglagesPage() {
-  const { user } = useStore()
+  const { user, logout } = useStore()
+  const nav = useNavigate()
   const [notifs, setNotifs] = useState(true)
   const [darkMode, setDarkMode] = useState(false)
   const [analytics, setAnalytics] = useState(true)
@@ -33,7 +35,10 @@ export default function ReglagesPage() {
       <motion.div variants={fadeUp} style={{ background:'linear-gradient(135deg,#EEF2FF,#E0E7FF)', borderRadius:22, padding:'24px', border:'1px solid #C7D2FE', marginBottom:20 }}>
         <div style={{ display:'flex', alignItems:'center', gap:16 }}>
           <div style={{ position:'relative' }}>
-            <img src={user?.avatar} alt={user?.name} style={{ width:64, height:64, borderRadius:'50%', objectFit:'cover', border:'3px solid #6366F1', boxShadow:'0 4px 16px rgba(99,102,241,0.35)' }} />
+            {user?.avatar
+            ? <img src={user.avatar} alt={user.name} style={{ width:64, height:64, borderRadius:'50%', objectFit:'cover', border:'3px solid #6366F1', boxShadow:'0 4px 16px rgba(99,102,241,0.35)' }} />
+            : <div style={{ width:64, height:64, borderRadius:'50%', background:'linear-gradient(135deg,#6366F1,#8B5CF6)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:26, fontWeight:700, color:'white', border:'3px solid #6366F1' }}>{user?.name?.charAt(0).toUpperCase()}</div>
+          }
             <button style={{ position:'absolute', bottom:0, right:0, width:24, height:24, background:'#6366F1', border:'2px solid white', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
               <Camera size={12} color="white" />
             </button>
@@ -113,7 +118,7 @@ export default function ReglagesPage() {
           </div>
           <span style={{ fontSize:15, fontWeight:700, color:'#0F172A' }}>Compte</span>
         </div>
-        <button style={{ width:'100%', display:'flex', alignItems:'center', gap:12, padding:'16px 20px', background:'none', border:'none', cursor:'pointer', fontFamily:'inherit' }}>
+        <button onClick={() => { logout(); nav('/login') }} style={{ width:'100%', display:'flex', alignItems:'center', gap:12, padding:'16px 20px', background:'none', border:'none', cursor:'pointer', fontFamily:'inherit' }}>
           <LogOut size={17} color="#EF4444" />
           <span style={{ fontSize:14, fontWeight:600, color:'#EF4444' }}>Se déconnecter</span>
         </button>

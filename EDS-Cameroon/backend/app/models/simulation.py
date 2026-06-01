@@ -42,6 +42,15 @@ class Simulation(Base):
     quintile_richesse: Mapped[int] = mapped_column(Integer, nullable=False)
     # 1=Le plus pauvre … 5=Le plus riche
 
+    travail: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    # 0=Non  1=Oui (v714)
+
+    region_nord: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    # 1=Région septentrionale (Adamaoua/Extrême-Nord/Nord)  0=Autre
+
+    religion_musulman: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    # 1=Musulmane  0=Non musulmane
+
     # ── Résultat de la prédiction ─────────────────────────────────────────────
     desire_enfant: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     probability: Mapped[float | None] = mapped_column(Float, nullable=True)

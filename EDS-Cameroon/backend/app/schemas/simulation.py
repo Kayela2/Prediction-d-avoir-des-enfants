@@ -12,6 +12,9 @@ class SimulationCreate(BaseModel):
     statut_matrimonial: int   # 1-5
     milieu_residence: int     # 1=Urbain 2=Rural
     quintile_richesse: int    # 1-5
+    travail: int = 0          # 0=Non 1=Oui
+    region_nord: int = 0      # 1=Septentrional 0=Autre
+    religion_musulman: int = 0  # 1=Musulmane 0=Autre
 
     @field_validator("age")
     @classmethod
@@ -61,6 +64,9 @@ class SimulationOut(BaseModel):
     statut_matrimonial: int
     milieu_residence: int
     quintile_richesse: int
+    travail: int
+    region_nord: int
+    religion_musulman: int
     desire_enfant: bool | None
     probability: float | None
     confidence: int | None

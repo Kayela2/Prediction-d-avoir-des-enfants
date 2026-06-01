@@ -72,6 +72,13 @@ df['niveau_instr_lbl'] = df['niveau_instruction'].map({0:'Aucun',1:'Primaire',2:
 df['residence_lbl']    = df['milieu_residence'].map({1:'Urbain', 2:'Rural'})
 df['desir_lbl']        = df['desir_enfant_bin'].map({1:'Désire un enfant', 0:'Ne désire pas'})
 
+# Nouvelles variables binaires (Cameroun : clivage Nord/Sud et religieux)
+# Régions septentrionales : Adamaoua (1), Extrême-Nord (4), Nord (6)
+df['region_nord']       = df['region'].isin([1, 4, 6]).astype(int)
+# Religion musulmane vs non-musulmane
+df['religion_musulman'] = (df['religion'] == 4).astype(int)
+# Travail (v714) est déjà 0/1
+
 dist = df['desir_enfant_bin'].value_counts(normalize=True) * 100
 print(f"Effectif final : {df.shape[0]:,} femmes")
 print(f"  Désire un autre enfant : {dist.get(1,0):.1f} %")
@@ -208,6 +215,9 @@ vars_chi2 = {
     'statut_matrimonial' : "Statut matrimonial",
     'quintile_richesse'  : "Quintile de richesse",
     'religion'           : "Religion",
+    'travail'            : "Emploi (travail)",
+    'region_nord'        : "Région septentrionale",
+    'religion_musulman'  : "Religion musulmane",
 }
 resultats_chi2 = []
 for var, label in vars_chi2.items():
@@ -223,8 +233,9 @@ chi2_df.to_csv("../outputs/tables/02_tests_chi2.csv", index=False)
 print(chi2_df.to_string(index=False))
 
 # %% ÉTAPE 7 — Régression logistique binaire (statsmodels)
-vars_modele = ['age','niveau_instruction','nb_enfants_vivants',
-               'contraceptif_bin','statut_matrimonial','milieu_residence','quintile_richesse']
+vars_modele = ['age', 'niveau_instruction', 'nb_enfants_vivants',
+               'contraceptif_bin', 'statut_matrimonial', 'milieu_residence',
+               'quintile_richesse', 'travail', 'region_nord', 'religion_musulman']
 
 df_mod  = df[vars_modele + ['desir_enfant_bin']].dropna()
 X_stat  = sm.add_constant(df_mod[vars_modele].astype(float))
@@ -329,6 +340,9 @@ var_labels = {
     'nb_enfants_vivants': 'Nb enfants vivants', 'contraceptif_bin': 'Contraceptif',
     'statut_matrimonial': 'Statut matrimonial',
     'milieu_residence': 'Milieu de résidence', 'quintile_richesse': 'Quintile richesse',
+    'travail': 'Emploi (travail)',
+    'region_nord': 'Région septentrionale',
+    'religion_musulman': 'Religion musulmane',
 }
 importances = pd.Series(rf.feature_importances_, index=vars_modele).sort_values(ascending=True)
 importances.index = [var_labels.get(i, i) for i in importances.index]

@@ -69,7 +69,7 @@ export default function DashboardPage() {
               Prédiction &amp; Fécondité
             </h2>
             <p style={{ fontSize:13, color:'rgba(255,255,255,0.6)', lineHeight:1.65, marginBottom:20, maxWidth:380 }}>
-              Modèle de régression logistique sur 150 000+ femmes camerounaises âgées de 15 à 49 ans.
+              Modèle Random Forest entraîné sur 13 527 femmes camerounaises de 15 à 49 ans (EDSC-V 2018).
             </p>
             {latest && (
               <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:20 }}>
@@ -234,7 +234,7 @@ function MTag({ icon, label }:{ icon:React.ReactNode; label:string }) {
 function EmptyState({ onCta }:{ onCta:()=>void }) {
   return (
     <div style={{ padding:'52px 24px', textAlign:'center', display:'flex', flexDirection:'column', alignItems:'center', gap:14 }}>
-      <div style={{ width:72, height:72, background:'var(--primary-light)', borderRadius:20, display:'flex', alignItems:'center', justifyContent:'center', fontSize:32 }}>📊</div>
+      <div style={{ width:72, height:72, background:'var(--primary-light)', borderRadius:20, display:'flex', alignItems:'center', justifyContent:'center' }}><BarChart2 size={34} color="var(--primary)" /></div>
       <div>
         <p style={{ fontSize:16, fontWeight:700, color:'var(--text)', marginBottom:4 }}>Aucune simulation</p>
         <p style={{ fontSize:13, color:'var(--text-faint)', lineHeight:1.65 }}>Lancez votre première simulation pour voir vos résultats ici.</p>

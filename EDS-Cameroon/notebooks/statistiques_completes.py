@@ -7,6 +7,8 @@
 import pandas as pd
 import numpy as np
 import pyreadstat
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import seaborn as sns
@@ -509,7 +511,7 @@ fig.suptitle("Analyse croisee du desir d'avoir un autre enfant\n(EDSC Cameroun 2
              fontsize=13, fontweight='bold')
 plt.tight_layout()
 plt.savefig("../outputs/figures/figA_croise_age_residence_quintile.png", bbox_inches='tight')
-plt.show()
+plt.close()
 print("Figure A sauvegardee.")
 
 # FIGURE B — Boxplots : distributions par desir
@@ -533,7 +535,7 @@ fig.suptitle("Distribution des variables continues selon le desir d'un autre enf
              fontsize=12, fontweight='bold')
 plt.tight_layout()
 plt.savefig("../outputs/figures/figB_boxplots_variables_continues.png", bbox_inches='tight')
-plt.show()
+plt.close()
 print("Figure B sauvegardee.")
 
 # FIGURE C — Forest plot des OR (version amelioree)
@@ -569,7 +571,7 @@ ax.legend(handles=[rouge_patch, gris_patch,
           loc='lower right', fontsize=9)
 plt.tight_layout()
 plt.savefig("../outputs/figures/figC_forest_plot_ameliore.png", bbox_inches='tight')
-plt.show()
+plt.close()
 print("Figure C sauvegardee.")
 
 # FIGURE D — Tableau de classification visuel
@@ -592,7 +594,7 @@ ax.set_title(f"Matrice de confusion — Regression logistique\n"
              fontsize=10, fontweight='bold')
 plt.tight_layout()
 plt.savefig("../outputs/figures/figD_matrice_confusion.png", bbox_inches='tight')
-plt.show()
+plt.close()
 print("Figure D sauvegardee.")
 
 # ============================================================

@@ -36,7 +36,8 @@ FEATURE_LABELS = {
 
 class FertilityPredictor:
     def __init__(self) -> None:
-        self._model = None
+        self._model    = None
+        self._features = None
 
     def _load(self) -> None:
         if self._model is not None:
@@ -46,31 +47,57 @@ class FertilityPredictor:
                 "Modèle ML introuvable. Exécutez d'abord : "
                 "python backend/scripts/train_model.py"
             )
-        self._model = joblib.load(MODEL_PATH)
+        payload = joblib.load(MODEL_PATH)
+        # Nouveau format : {"model": clf, "features": [...]}
+        if isinstance(payload, dict) and "model" in payload:
+            self._model    = payload["model"]
+            self._features = payload["features"]
+        else:
+            # Ancien format (compatibilité)
+            self._model    = payload
+            self._features = FEATURE_NAMES
+
+    def _model_name(self) -> str:
+        name = type(self._model).__name__
+        return {"LogisticRegression": "logistic_regression_v2",
+                "RandomForestClassifier": "random_forest_v2",
+                "DecisionTreeClassifier": "decision_tree_v2"}.get(name, name)
 
     def predict(self, data: dict[str, Any]) -> dict[str, Any]:
         self._load()
 
-        X = pd.DataFrame([[data[f] for f in FEATURE_NAMES]], columns=FEATURE_NAMES, dtype=float)
+        features = self._features
+        X = pd.DataFrame(
+            [[data.get(f, 0) for f in features]],
+            columns=features, dtype=float
+        )
 
-        probability = float(self._model.predict_proba(X)[0][1])
+        probability   = float(self._model.predict_proba(X)[0][1])
         desire_enfant = probability >= 0.5
-        confidence = int(round(max(probability, 1 - probability) * 100))
+        confidence    = int(round(max(probability, 1 - probability) * 100))
 
+        # Importances : RF → feature_importances_, LR → |coef| normalisé
         importances: dict[str, float] = {}
         if hasattr(self._model, "feature_importances_"):
-            for name, imp in zip(FEATURE_NAMES, self._model.feature_importances_):
-                importances[FEATURE_LABELS[name]] = round(float(imp), 4)
+            raw = self._model.feature_importances_
+        elif hasattr(self._model, "coef_"):
+            raw = np.abs(self._model.coef_[0])
+            raw = raw / raw.sum() if raw.sum() > 0 else raw
+        else:
+            raw = np.zeros(len(features))
+
+        for name, imp in zip(features, raw):
+            importances[FEATURE_LABELS.get(name, name)] = round(float(imp), 4)
 
         insights = self._generate_insights(data, probability)
 
         return {
-            "desire_enfant": desire_enfant,
-            "probability": round(probability, 4),
-            "confidence": confidence,
-            "model_used": "random_forest_v1",
+            "desire_enfant":      desire_enfant,
+            "probability":        round(probability, 4),
+            "confidence":         confidence,
+            "model_used":         self._model_name(),
             "feature_importances": importances,
-            "insights": insights,
+            "insights":           insights,
         }
 
     def _generate_insights(self, data: dict[str, Any], prob: float) -> list[str]:

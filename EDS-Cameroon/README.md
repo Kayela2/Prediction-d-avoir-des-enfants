@@ -6,7 +6,7 @@
 
 ## Présentation
 
-**Hearth** est une application web qui permet d'estimer la probabilité qu'une femme camerounaise de 15 à 49 ans désire avoir un enfant supplémentaire. Elle repose sur un modèle de Machine Learning (Random Forest) entraîné sur les données officielles de l'EDSC-V 2018 (INS Cameroun, n = 13 527 femmes).
+**Hearth** est une application web qui permet d'estimer la probabilité qu'une femme camerounaise de 15 à 49 ans désire avoir un enfant supplémentaire. Elle repose sur un modèle de Machine Learning (Régression Logistique) entraîné sur les données officielles de l'EDSC-V 2018 (INS Cameroun, n = 13 527 femmes).
 
 L'utilisateur renseigne son profil en 5 étapes (âge, situation familiale, niveau d'instruction, milieu de résidence, quintile de richesse) et obtient un résultat personnalisé avec les facteurs explicatifs.
 
@@ -15,7 +15,7 @@ L'utilisateur renseigne son profil en 5 étapes (âge, situation familiale, nive
 ## Fonctionnalités
 
 - **Simulation guidée** en 5 étapes avec interface moderne
-- **Prédiction ML** (Random Forest, AUC = 0.75, Accuracy = 93.7 %)
+- **Prédiction ML** (Régression Logistique, AUC = 0.80, Accuracy = 93.7 %)
 - **10 variables explicatives** : âge, instruction, enfants vivants, contraceptif, statut matrimonial, résidence, richesse, emploi, région septentrionale, religion musulmane
 - **Résultats détaillés** avec facteurs d'influence et insights contextuels
 - **Export PDF** de l'analyse et partage de lien
@@ -30,7 +30,7 @@ L'utilisateur renseigne son profil en 5 étapes (âge, situation familiale, nive
 |---|---|
 | Frontend | React 19, TypeScript, Vite, Framer Motion, Recharts, Zustand |
 | Backend | FastAPI, SQLAlchemy, SQLite, Pydantic v2 |
-| Machine Learning | scikit-learn (Random Forest), pandas, numpy, joblib |
+| Machine Learning | scikit-learn (Régression Logistique), pandas, numpy, joblib |
 | Authentification | JWT (python-jose + passlib) |
 | Déploiement | Docker (multi-stage), Render |
 
@@ -45,7 +45,7 @@ EDS-Cameroon/
 │   ├── app/
 │   │   ├── api/routes/               # Endpoints FastAPI (auth, users, simulations, prediction)
 │   │   ├── ml/
-│   │   │   ├── model.joblib          # Modèle Random Forest entraîné
+│   │   │   ├── model.joblib          # Modèle Régression Logistique entraîné
 │   │   │   └── predictor.py          # Logique de prédiction + insights
 │   │   ├── models/                   # Modèles SQLAlchemy (User, Simulation, …)
 │   │   ├── schemas/                  # Schémas Pydantic
@@ -184,10 +184,10 @@ Les données brutes ne sont pas versionnées (taille > 100 Mo). Elles sont dispo
 |---|---|
 | Prévalence du désir | 94.5 % |
 | Accuracy (test) | 93.7 % |
-| ROC-AUC (test) | 0.75 |
-| Facteurs significatifs | Âge (OR = 0.863), Milieu de résidence (OR = 0.715) |
+| ROC-AUC (test, CV-5) | 0.80 |
+| Facteurs significatifs | Âge, Nb enfants vivants, Statut matrimonial, Contraceptif, Quintile de richesse |
 
-Le modèle Random Forest confirme la supériorité de la Régression Logistique en termes d'AUC pour ce jeu de données fortement déséquilibré.
+La Régression Logistique a été sélectionnée car elle offre le meilleur AUC (0.80) sans overfitting (gap Train/Test = 0.00), contrairement au Random Forest (gap = 0.26 — overfitting sévère).
 
 ---
 

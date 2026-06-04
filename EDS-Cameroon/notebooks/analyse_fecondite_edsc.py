@@ -7,6 +7,8 @@
 import pandas as pd
 import numpy as np
 import pyreadstat
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import chi2_contingency
@@ -110,7 +112,7 @@ ax.set_title("Distribution du désir d'avoir un autre enfant\n(Cameroun EDSC 201
 ax.set_ylabel("Nombre de femmes")
 plt.tight_layout()
 plt.savefig("../outputs/figures/fig1_variable_cible.png")
-plt.show()
+plt.close()
 
 # %% FIGURE 2 — Désir par tranche d'âge
 fig, ax = plt.subplots(figsize=(10, 5))
@@ -126,7 +128,7 @@ for p in ax.patches:
                 ha='center', va='bottom', fontsize=9)
 plt.tight_layout()
 plt.savefig("../outputs/figures/fig2_desir_par_age.png")
-plt.show()
+plt.close()
 
 # %% FIGURE 3 — Désir par niveau d'instruction
 fig, ax = plt.subplots(figsize=(8, 5))
@@ -144,7 +146,7 @@ for p in ax.patches:
                 ha='center', va='bottom', fontsize=9)
 plt.tight_layout()
 plt.savefig("../outputs/figures/fig3_desir_par_instruction.png")
-plt.show()
+plt.close()
 
 # %% FIGURE 4 — Désir par nombre d'enfants vivants
 fig, ax = plt.subplots(figsize=(10, 5))
@@ -160,7 +162,7 @@ for p in ax.patches:
                 ha='center', va='bottom', fontsize=9)
 plt.tight_layout()
 plt.savefig("../outputs/figures/fig4_desir_par_nb_enfants.png")
-plt.show()
+plt.close()
 
 # %% FIGURE 5 — Résidence et contraceptifs
 fig, axes = plt.subplots(1, 2, figsize=(12, 5))
@@ -189,7 +191,7 @@ for p in axes[1].patches:
 fig.suptitle("Désir d'un autre enfant selon le contexte", fontsize=13, fontweight='bold')
 plt.tight_layout()
 plt.savefig("../outputs/figures/fig5_residence_contraceptif.png")
-plt.show()
+plt.close()
 
 # %% FIGURE 6 — Heatmap de corrélation
 fig, ax = plt.subplots(figsize=(9, 7))
@@ -204,7 +206,7 @@ sns.heatmap(corr_df, annot=True, fmt='.2f', cmap='coolwarm', center=0,
 ax.set_title("Matrice de corrélation entre les variables", fontsize=13, fontweight='bold')
 plt.tight_layout()
 plt.savefig("../outputs/figures/fig6_heatmap_correlation.png")
-plt.show()
+plt.close()
 
 # %% ÉTAPE 6 — Tests d'indépendance (Chi²)
 vars_chi2 = {
@@ -275,7 +277,7 @@ ax.set_title("Forest Plot — Régression logistique\nFacteurs du désir d'avoir
 ax.legend()
 plt.tight_layout()
 plt.savefig("../outputs/figures/fig7_forest_plot_OR.png")
-plt.show()
+plt.close()
 
 # %% VIF — Test de multicolinéarité
 vif = pd.DataFrame({
@@ -330,7 +332,7 @@ ax.set_title("Courbes ROC — Comparaison des modèles ML", fontsize=13, fontwei
 ax.legend(loc='lower right')
 plt.tight_layout()
 plt.savefig("../outputs/figures/fig8_roc_curves.png")
-plt.show()
+plt.close()
 
 # %% FIGURE 9 — Importance des variables (Random Forest)
 fig, ax = plt.subplots(figsize=(8, 5))
@@ -355,7 +357,7 @@ for p in ax.patches:
                 ha='left', va='center', fontsize=9)
 plt.tight_layout()
 plt.savefig("../outputs/figures/fig9_importance_variables.png")
-plt.show()
+plt.close()
 
 # %% FIGURE 10 — Comparaison des performances
 fig, ax = plt.subplots(figsize=(9, 5))
@@ -374,7 +376,7 @@ for bar in list(b1) + list(b2):
             f"{bar.get_height():.3f}", ha='center', va='bottom', fontsize=9)
 plt.tight_layout()
 plt.savefig("../outputs/figures/fig10_comparaison_modeles.png")
-plt.show()
+plt.close()
 
 # %% Résumé final
 print("=" * 55)

@@ -107,7 +107,7 @@ export default function DashboardPage() {
       <motion.div variants={fadeUp} style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16, marginBottom:18 }} className="stat-row">
         {[
           { icon:TrendingUp, c:'#6366F1', bg:'#EEF2FF', label:'Simulations',   v:String(simulations.length), trend:'+2 ce mois' },
-          { icon:Clock,      c:'#10B981', bg:'#ECFDF5', label:'Actif depuis',  v:'6 mois',                   trend:'Depuis jan. 2024' },
+          { icon:Clock,      c:'#10B981', bg:'#ECFDF5', label:'Actif depuis',  v:'mai 2026',                 trend:'Depuis mai 2026' },
           { icon:Sparkles,   c:'#F59E0B', bg:'#FFFBEB', label:'Score moyen',   v:`${avg}%`,                  trend:'Indice de confiance' },
         ].map(({ icon:Icon, c, bg, label, v, trend }) => (
           <div key={label} style={{ background:'white', borderRadius:20, padding:'20px', border:'1px solid var(--border)', boxShadow:'var(--shadow-xs)' }}>

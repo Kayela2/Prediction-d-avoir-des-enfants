@@ -9,7 +9,7 @@ class SimulationCreate(BaseModel):
     niveau_instruction: int   # 0=Aucun 1=Primaire 2=Secondaire 3=Supérieur
     nb_enfants_vivants: int
     contraceptif: int         # 0=Non 1=Oui
-    statut_matrimonial: int   # 1-5
+    statut_matrimonial: int   # v501 EDSC : 0=Célibataire 1=Marié 2=Union libre 3=Veuf 4=Divorcé 5=Séparé
     milieu_residence: int     # 1=Urbain 2=Rural
     quintile_richesse: int    # 1-5
     travail: int = 0          # 0=Non 1=Oui

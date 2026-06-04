@@ -1,9 +1,13 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Bell, Search, Save, Share2, Sparkles, Lightbulb, MoreVertical, GraduationCap, MapPin, Coins, Check, CheckCircle2, XCircle } from 'lucide-react'
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { useStore } from '../store/useStore'
+
+// Reverse maps : codes numériques → labels pour l'affichage depuis l'historique
+const INSTRUCTION_REVERSE: Record<number, import('../types').Instruction> = { 0:'aucun', 1:'primaire', 2:'secondaire', 3:'superieur' }
+const MILIEU_REVERSE: Record<number, import('../types').Milieu>           = { 1:'urbain', 2:'rural' }
 
 // ── Design tokens (same as OnboardingPage / Figma) ────────────────────────────
 const P     = '#3B3ADB'
@@ -68,8 +72,17 @@ function FactorBar({ pct, color }:{ pct:number; color:string }) {
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function ResultsPage() {
   const nav = useNavigate()
-  const { predictionResult, user } = useStore()
+  const { id } = useParams<{ id: string }>()
+  const { predictionResult, simulations, fetchSimulations, user } = useStore()
   const [copied, setCopied] = useState(false)
+
+  // Charger l'historique si vide (navigation directe depuis l'historique)
+  useEffect(() => {
+    if (!simulations.length) fetchSimulations()
+  }, [fetchSimulations, simulations.length])
+
+  // Simulation correspondante dans le store (pour navigation depuis l'historique)
+  const simFromHistory = simulations.find(s => s.id === id)
 
   function handleSavePDF() {
     window.print()
@@ -89,17 +102,25 @@ export default function ResultsPage() {
     }
   }
 
-  const res = predictionResult ?? {
+  // Priorité : résultat riche de la prédiction en cours → fallback : simulation historique
+  const res = predictionResult ?? (simFromHistory ? {
+    confidence:         simFromHistory.confidence ?? 0,
+    desireEnfant:       simFromHistory.desire_enfant ?? false,
+    probability:        simFromHistory.probability ?? 0,
+    instruction:        INSTRUCTION_REVERSE[simFromHistory.niveau_instruction] ?? 'primaire',
+    milieu:             MILIEU_REVERSE[simFromHistory.milieu_residence] ?? 'urbain',
+    nbEnfants:          simFromHistory.nb_enfants_vivants,
+    age:                simFromHistory.age,
+    quintile:           simFromHistory.quintile_richesse,
+    insights:           [] as string[],
+    featureImportances: {} as Record<string, number>,
+  } : {
     confidence: 84, desireEnfant: true, probability: 0.84,
     instruction: 'superieur' as const, milieu: 'urbain' as const,
     nbEnfants: 2, age: 28, quintile: 3,
-    insights: [
-      'Niveau d\'instruction élevé associé à une planification consciente.',
-      'Milieu urbain : accès aux services de santé reproductive.',
-      'Profil proche de la médiane nationale EDSC-V 2018.',
-    ],
+    insights: [] as string[],
     featureImportances: {} as Record<string, number>,
-  }
+  })
 
   const q = (res as { quintile?: number }).quintile ?? 3
 
@@ -213,7 +234,7 @@ export default function ResultsPage() {
         {/* ── BOTTOM ROW ── */}
         <motion.div variants={fadeUp} style={{ display:'grid', gridTemplateColumns:'1.2fr 1fr', gap:16 }} className="bottom-grid">
 
-          {/* IA Analysis — insights réels du modèle Random Forest */}
+          {/* IA Analysis — insights réels du modèle (Régression Logistique) */}
           <div style={{ background:'white', borderRadius:18, padding:'24px', border:`1px solid ${BORD}`, boxShadow:`0 2px 12px rgba(59,58,219,0.05)` }}>
             <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:16 }}>
               <div style={{ width:36, height:36, background:PLT, borderRadius:10, display:'flex', alignItems:'center', justifyContent:'center' }}>
@@ -250,8 +271,8 @@ export default function ResultsPage() {
               </div>
             ) : (
               <p style={{ fontSize:13, color:MUTED, lineHeight:1.75, marginBottom:14 }}>
-                <strong style={{ color:NAVY }}>{firstName}</strong>, votre profil ({instrLabel}, {milLabel}) est comparé à {'>'}13 000 femmes de l'EDSC Cameroun 2018.
-                Le modèle Random Forest identifie les facteurs clés qui influencent votre désir de fécondité.
+                <strong style={{ color:NAVY }}>{firstName}</strong>, votre profil ({instrLabel}, {milLabel}) est comparé à 13 527 femmes de l'EDSC Cameroun 2018.
+                Le modèle identifie les facteurs clés qui influencent votre désir de fécondité.
               </p>
             )}
 
@@ -338,7 +359,7 @@ export default function ResultsPage() {
         <motion.div variants={fadeUp} style={{ marginTop:16, background:'white', borderRadius:14, padding:'13px 18px', border:`1px solid ${BORD}`, display:'flex', gap:10, alignItems:'center' }}>
           <span style={{ fontSize:18, flexShrink:0 }}>🇨🇲</span>
           <p style={{ fontSize:12, color:MUTED, margin:0, lineHeight:1.5 }}>
-            <strong style={{ color:NAVY }}>Source :</strong> Enquête Démographique et de Santé du Cameroun (EDSC-V 2018) · INS · Modèle Random Forest entraîné sur 13 527 femmes de 15–49 ans.
+            <strong style={{ color:NAVY }}>Source :</strong> Enquête Démographique et de Santé du Cameroun (EDSC-V 2018) · INS · Régression Logistique entraînée sur 13 527 femmes de 15–49 ans.
           </p>
           <button onClick={() => nav('/simulation')} className="no-print"
             style={{ marginLeft:'auto', flexShrink:0, padding:'7px 16px', background:PLT, border:`1px solid ${P}22`, borderRadius:999, fontSize:12, fontWeight:700, color:P, cursor:'pointer', fontFamily:'inherit', whiteSpace:'nowrap' }}>

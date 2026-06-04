@@ -88,7 +88,7 @@ export default function OnboardingPage() {
   const [instruction,       setInstruction]       = useState<Instruction|null>(null)
   const [milieu,            setMilieu]            = useState<Milieu|null>(null)
   const [quintile,          setQuintile]          = useState<Quintile|null>(null)
-  const [statutMatrimonial, setStatutMatrimonial] = useState<number>(2) // 2 = Marié(e) par défaut
+  const [statutMatrimonial, setStatutMatrimonial] = useState<number>(1) // v501 EDSC : 1=Marié(e)
   const [contraceptif,      setContraceptif]      = useState<number>(0)
   const [travail,           setTravail]           = useState<number>(0)
   const [regionCode,        setRegionCode]        = useState<number>(0)
@@ -187,7 +187,7 @@ export default function OnboardingPage() {
             <motion.div animate={{ rotate:360 }} transition={{ duration:1.5, repeat:Infinity, ease:'linear' }}
               style={{ width:64, height:64, borderRadius:'50%', border:`6px solid ${PLT}`, borderTopColor:P }} />
             <p style={{ fontSize:20, fontWeight:800, color:'white', letterSpacing:'-0.02em' }}>Analyse EDSC-V en cours…</p>
-            <p style={{ fontSize:14, color:'rgba(255,255,255,0.55)' }}>Comparaison avec 150 000+ profils camerounais</p>
+            <p style={{ fontSize:14, color:'rgba(255,255,255,0.55)' }}>Comparaison avec 13 527 femmes camerounaises (EDSC-V 2018)</p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -373,11 +373,12 @@ export default function OnboardingPage() {
                     <p style={{ fontSize:13, fontWeight:700, color:NAVY, marginBottom:12 }}>Statut matrimonial</p>
                     <div className="stat-mat-grid" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
                       {[
-                        { v:1, label:'Célibataire' },
-                        { v:2, label:'Marié(e)' },
-                        { v:3, label:'Union libre' },
-                        { v:4, label:'Séparé(e)' },
-                        { v:5, label:'Veuf/Veuve' },
+                        { v:0, label:'Célibataire' },
+                        { v:1, label:'Marié(e)' },
+                        { v:2, label:'Union libre' },
+                        { v:3, label:'Veuf / Veuve' },
+                        { v:4, label:'Divorcé(e)' },
+                        { v:5, label:'Séparé(e)' },
                       ].map(({ v, label }) => (
                         <button key={v} onClick={()=>setStatutMatrimonial(v)} type="button"
                           style={{ padding:'9px 12px', borderRadius:10, border:`1.5px solid ${statutMatrimonial===v?P:BORD}`, background:statutMatrimonial===v?PLT:'white', color:statutMatrimonial===v?P:MUTED, fontSize:12, fontWeight:statutMatrimonial===v?700:400, cursor:'pointer', fontFamily:'inherit', transition:'all 0.15s' }}>

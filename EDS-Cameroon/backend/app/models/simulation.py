@@ -34,7 +34,7 @@ class Simulation(Base):
     # 0=Non  1=Oui
 
     statut_matrimonial: Mapped[int] = mapped_column(Integer, nullable=False)
-    # 1=Célibataire  2=Marié(e)  3=Union libre  4=Divorcé(e)/Séparé(e)  5=Veuf/Veuve
+    # v501 EDSC : 0=Jamais marié  1=Marié(e)  2=Union libre  3=Veuf/Veuve  4=Divorcé(e)  5=Séparé(e)
 
     milieu_residence: Mapped[int] = mapped_column(Integer, nullable=False)
     # 1=Urbain  2=Rural

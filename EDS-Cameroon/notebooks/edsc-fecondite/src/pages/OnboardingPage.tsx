@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Home, TrendingUp, Clock, Settings, Check,
-  Info, ChevronLeft, ChevronRight, Heart, Lightbulb, Sparkles, Scale
+  Info, ChevronLeft, ChevronRight, Heart, Lightbulb, Sparkles, Scale, ChevronDown
 } from 'lucide-react'
 import { useStore, INSTRUCTION_MAP, MILIEU_MAP } from '../store/useStore'
 import { api } from '../lib/api'
@@ -46,6 +46,30 @@ const QUIN: { v:Quintile; label:string; desc:string }[] = [
   { v:5, label:'Riche',         desc:'Revenus élevés, liberté financière et accès à tous les services.' },
 ]
 
+// Régions du Cameroun (v024 EDSC) — nord:true = Adamaoua(1), Extrême-Nord(4), Nord(6)
+const REGIONS: { v:number; label:string; nord:boolean }[] = [
+  { v:1,  label:'Adamaoua',     nord:true  },
+  { v:2,  label:'Centre',       nord:false },
+  { v:3,  label:'Est',          nord:false },
+  { v:4,  label:'Extrême-Nord', nord:true  },
+  { v:5,  label:'Littoral',     nord:false },
+  { v:6,  label:'Nord',         nord:true  },
+  { v:7,  label:'Nord-Ouest',   nord:false },
+  { v:8,  label:'Ouest',        nord:false },
+  { v:9,  label:'Sud',          nord:false },
+  { v:10, label:'Sud-Ouest',    nord:false },
+]
+
+// Religions (v130 EDSC Cameroun 2018)
+const RELIGIONS: { v:number; label:string; musulman:boolean }[] = [
+  { v:1, label:'Catholique',            musulman:false },
+  { v:2, label:'Protestant',            musulman:false },
+  { v:3, label:'Autres chrétiens',      musulman:false },
+  { v:4, label:'Musulman',              musulman:true  },
+  { v:5, label:'Animiste / Traditionnelle', musulman:false },
+  { v:6, label:'Autre / Sans religion', musulman:false },
+]
+
 const slideV = {
   enter: (d:number) => ({ opacity:0, x:d>0?40:-40 }),
   center: { opacity:1, x:0, transition:{ duration:0.35, ease:'easeOut' } },
@@ -67,9 +91,13 @@ export default function OnboardingPage() {
   const [statutMatrimonial, setStatutMatrimonial] = useState<number>(2) // 2 = Marié(e) par défaut
   const [contraceptif,      setContraceptif]      = useState<number>(0)
   const [travail,           setTravail]           = useState<number>(0)
-  const [regionNord,        setRegionNord]        = useState<number>(0)
-  const [religionMusulman,  setReligionMusulman]  = useState<number>(0)
+  const [regionCode,        setRegionCode]        = useState<number>(0)
+  const [religionCode,      setReligionCode]      = useState<number>(0)
   const [analyzing,         setAnalyzing]         = useState(false)
+
+  // Dérivé : conversion dropdown → binaire pour le modèle ML
+  const regionNord       = REGIONS.find(r => r.v === regionCode)?.nord    ? 1 : 0
+  const religionMusulman = RELIGIONS.find(r => r.v === religionCode)?.musulman ? 1 : 0
   const [simError,          setSimError]          = useState<string|null>(null)
 
   function canNext() {
@@ -520,28 +548,68 @@ export default function OnboardingPage() {
 
                   {/* Contexte socioculturel */}
                   <div style={{ marginTop:20, background:'white', borderRadius:18, padding:'18px 20px', border:`1.5px solid ${BORD}` }}>
-                    <p style={{ fontSize:13, fontWeight:700, color:NAVY, marginBottom:14 }}>Contexte socioculturel</p>
+                    <p style={{ fontSize:13, fontWeight:700, color:NAVY, marginBottom:4 }}>Contexte socioculturel</p>
+                    <p style={{ fontSize:11, color:MUTED, marginBottom:16 }}>Facultatif — améliore la précision de la simulation</p>
 
-                    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
-                      <div>
-                        <p style={{ fontSize:13, fontWeight:600, color:NAVY, margin:0 }}>Région septentrionale</p>
-                        <p style={{ fontSize:11, color:MUTED, margin:'2px 0 0' }}>Adamaoua, Extrême-Nord ou Nord</p>
+                    {/* Région dropdown */}
+                    <div style={{ marginBottom:14 }}>
+                      <label style={{ display:'block', fontSize:12, fontWeight:600, color:MUTED, marginBottom:6 }}>
+                        Région de résidence (Cameroun)
+                      </label>
+                      <div style={{ position:'relative' }}>
+                        <select
+                          value={regionCode}
+                          onChange={e => setRegionCode(Number(e.target.value))}
+                          style={{
+                            width:'100%', appearance:'none', WebkitAppearance:'none',
+                            padding:'10px 36px 10px 14px', borderRadius:12,
+                            border:`1.5px solid ${regionCode ? P : BORD}`,
+                            background:'white', fontSize:13, fontFamily:'inherit',
+                            color: regionCode ? NAVY : MUTED,
+                            cursor:'pointer', outline:'none', transition:'border-color 0.2s',
+                          }}>
+                          <option value={0}>Sélectionnez votre région…</option>
+                          {REGIONS.map(r => (
+                            <option key={r.v} value={r.v}>
+                              {r.nord ? '◆ ' : ''}{r.label}
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronDown size={15} color={MUTED} style={{ position:'absolute', right:12, top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }} />
                       </div>
-                      <button onClick={()=>setRegionNord(r=>r===0?1:0)} type="button"
-                        style={{ width:48, height:26, borderRadius:999, border:'none', background:regionNord===1?P:BORD, cursor:'pointer', position:'relative', transition:'background 0.2s', flexShrink:0 }}>
-                        <div style={{ position:'absolute', top:3, left:regionNord===1?'calc(100% - 23px)':3, width:20, height:20, borderRadius:'50%', background:'white', transition:'left 0.2s', boxShadow:'0 1px 4px rgba(0,0,0,0.2)' }} />
-                      </button>
+                      {regionCode > 0 && (
+                        <p style={{ fontSize:11, marginTop:5, color: regionNord ? '#7B3ADB' : MUTED }}>
+                          {regionNord
+                            ? '◆ Région septentrionale — fécondité plus élevée selon l\'EDSC 2018'
+                            : 'Région méridionale, côtière ou de l\'Ouest'}
+                        </p>
+                      )}
                     </div>
 
-                    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                      <div>
-                        <p style={{ fontSize:13, fontWeight:600, color:NAVY, margin:0 }}>Religion musulmane</p>
-                        <p style={{ fontSize:11, color:MUTED, margin:'2px 0 0' }}>Pratique de l'islam</p>
+                    {/* Religion dropdown */}
+                    <div>
+                      <label style={{ display:'block', fontSize:12, fontWeight:600, color:MUTED, marginBottom:6 }}>
+                        Religion pratiquée
+                      </label>
+                      <div style={{ position:'relative' }}>
+                        <select
+                          value={religionCode}
+                          onChange={e => setReligionCode(Number(e.target.value))}
+                          style={{
+                            width:'100%', appearance:'none', WebkitAppearance:'none',
+                            padding:'10px 36px 10px 14px', borderRadius:12,
+                            border:`1.5px solid ${religionCode ? P : BORD}`,
+                            background:'white', fontSize:13, fontFamily:'inherit',
+                            color: religionCode ? NAVY : MUTED,
+                            cursor:'pointer', outline:'none', transition:'border-color 0.2s',
+                          }}>
+                          <option value={0}>Sélectionnez votre religion…</option>
+                          {RELIGIONS.map(r => (
+                            <option key={r.v} value={r.v}>{r.label}</option>
+                          ))}
+                        </select>
+                        <ChevronDown size={15} color={MUTED} style={{ position:'absolute', right:12, top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }} />
                       </div>
-                      <button onClick={()=>setReligionMusulman(r=>r===0?1:0)} type="button"
-                        style={{ width:48, height:26, borderRadius:999, border:'none', background:religionMusulman===1?P:BORD, cursor:'pointer', position:'relative', transition:'background 0.2s', flexShrink:0 }}>
-                        <div style={{ position:'absolute', top:3, left:religionMusulman===1?'calc(100% - 23px)':3, width:20, height:20, borderRadius:'50%', background:'white', transition:'left 0.2s', boxShadow:'0 1px 4px rgba(0,0,0,0.2)' }} />
-                      </button>
                     </div>
                   </div>
 

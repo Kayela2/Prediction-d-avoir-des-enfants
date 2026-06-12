@@ -68,7 +68,7 @@ interface AppState {
   resetSim: () => void
 
   login: (email: string, password: string) => Promise<void>
-  register: (name: string, email: string, password: string) => Promise<void>
+  register: (name: string, email: string, password: string, sexe?: string) => Promise<void>
   logout: () => void
   fetchUser: () => Promise<void>
   fetchSimulations: () => Promise<void>
@@ -109,10 +109,10 @@ export const useStore = create<AppState>((set, get) => ({
     }
   },
 
-  register: async (name, email, password) => {
+  register: async (name, email, password, sexe) => {
     set({ authLoading: true, authError: null })
     try {
-      await api.post('/auth/register', { name, email, password })
+      await api.post('/auth/register', { name, email, password, sexe: sexe ?? null })
       // Connexion automatique après inscription
       const { data } = await api.post('/auth/login', { email, password })
       localStorage.setItem('token', data.access_token)
@@ -141,6 +141,7 @@ export const useStore = create<AppState>((set, get) => ({
           id:    data.id,
           name:  data.name,
           email: data.email,
+          sexe:  data.sexe ?? null,
           plan:  data.plan ?? 'free',
         },
       })

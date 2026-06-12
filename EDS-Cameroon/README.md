@@ -1,26 +1,43 @@
 # Hearth — Simulation du désir de fécondité au Cameroun
 
-> Application de simulation démographique basée sur l'Enquête Démographique et de Santé du Cameroun (EDSC-V 2018)
+> Application web de simulation démographique basée sur l'Enquête Démographique et de Santé du Cameroun (EDSC-V 2018)
 
 ---
 
 ## Présentation
 
-**Hearth** est une application web qui permet d'estimer la probabilité qu'une femme camerounaise de 15 à 49 ans désire avoir un enfant supplémentaire. Elle repose sur un modèle de Machine Learning (Régression Logistique) entraîné sur les données officielles de l'EDSC-V 2018 (INS Cameroun, n = 13 527 femmes).
+**Hearth** est une application web full-stack qui estime la probabilité qu'une femme camerounaise de 15 à 49 ans désire avoir un enfant supplémentaire. Elle repose sur un modèle de Machine Learning (SVM calibré, sélectionné par comparaison de 4 modèles avec SMOTE) entraîné sur les données officielles de l'EDSC-V 2018 (INS Cameroun, n = 13 527 femmes).
 
-L'utilisateur renseigne son profil en 5 étapes (âge, situation familiale, niveau d'instruction, milieu de résidence, quintile de richesse) et obtient un résultat personnalisé avec les facteurs explicatifs.
+L'utilisateur renseigne son profil en 5 étapes et obtient un résultat personnalisé accompagné des facteurs explicatifs, des insights contextuels et d'un graphique de probabilité par quintile de richesse.
+
+**Contexte académique :** Mémoire de Master 1 — Analyse des déterminants du désir de fécondité des femmes au Cameroun.
 
 ---
 
 ## Fonctionnalités
 
-- **Simulation guidée** en 5 étapes avec interface moderne
-- **Prédiction ML** (Régression Logistique, AUC = 0.80, Accuracy = 93.7 %)
-- **10 variables explicatives** : âge, instruction, enfants vivants, contraceptif, statut matrimonial, résidence, richesse, emploi, région septentrionale, religion musulmane
-- **Résultats détaillés** avec facteurs d'influence et insights contextuels
-- **Export PDF** de l'analyse et partage de lien
-- **Historique** des simulations par utilisateur
-- **Architecture unifiée** : le backend FastAPI sert directement le frontend React
+- **Simulation guidée en 5 étapes** — interface moderne et responsive
+- **Prédiction ML avec SMOTE** — rééquilibrage de la classe minoritaire (5.5 % → 50 %) avant entraînement
+- **Comparaison de 4 modèles** — Régression Logistique, Random Forest, Arbre de Décision, SVM
+- **10 variables prédictives** — âge, instruction, enfants vivants, contraceptif, statut matrimonial, résidence, richesse, emploi, région septentrionale, religion
+- **Résultats enrichis** — facteurs d'influence, insights contextuels, graphique quintile
+- **Authentification complète** — inscription (avec identité de genre), connexion JWT, mot de passe oublié
+- **Historique des simulations** par utilisateur
+- **Export PDF** et partage de lien
+
+---
+
+## Résultats du modèle
+
+| Modèle | AUC CV-5 | AUC Test | Gap | Statut |
+|---|---|---|---|---|
+| Régression Logistique | 0.8106 | 0.8076 | 0.003 | ✓ Bon ajustement |
+| Random Forest | 0.9908 | 0.7486 | 0.251 | ✗ Overfitting sévère |
+| Arbre de Décision | 0.8948 | 0.7823 | 0.118 | ⚠ Léger overfitting |
+| **SVM calibré** | **0.9513** | **0.8090** | **0.148** | **⚠ Sélectionné** |
+
+**Critère de sélection :** meilleur AUC CV-5 parmi les modèles avec gap ≤ 0.15.  
+**SMOTE :** 10 821 → 20 450 observations (train) — équilibre parfait 50/50.
 
 ---
 
@@ -29,9 +46,9 @@ L'utilisateur renseigne son profil en 5 étapes (âge, situation familiale, nive
 | Couche | Technologie |
 |---|---|
 | Frontend | React 19, TypeScript, Vite, Framer Motion, Recharts, Zustand |
-| Backend | FastAPI, SQLAlchemy, SQLite, Pydantic v2 |
-| Machine Learning | scikit-learn (Régression Logistique), pandas, numpy, joblib |
-| Authentification | JWT (python-jose + passlib) |
+| Backend | FastAPI 0.111, SQLAlchemy 2, SQLite, Pydantic v2 |
+| Machine Learning | scikit-learn 1.5, imbalanced-learn (SMOTE), pandas, numpy, joblib |
+| Authentification | JWT (python-jose + passlib + bcrypt) |
 | Déploiement | Docker (multi-stage), Render |
 
 ---
@@ -40,29 +57,42 @@ L'utilisateur renseigne son profil en 5 étapes (âge, situation familiale, nive
 
 ```
 EDS-Cameroon/
-├── Dockerfile                        # Build multi-stage (React + Python)
+├── README.md
+├── Dockerfile                          # Build multi-stage (React → Python)
+├── data/
+│   └── CMIR71FL.SAV                    # Données EDSC-V 2018 (non versionnées)
 ├── backend/
+│   ├── requirements.txt                # Dépendances Python
+│   ├── .env                            # Variables d'environnement (non versionné)
+│   ├── hearth.db                       # Base SQLite (non versionnée)
 │   ├── app/
-│   │   ├── api/routes/               # Endpoints FastAPI (auth, users, simulations, prediction)
+│   │   ├── main.py                     # Application FastAPI + fichiers statiques
+│   │   ├── api/routes/
+│   │   │   ├── auth.py                 # /auth/register, /login, /forgot-password
+│   │   │   ├── users.py                # /users/me
+│   │   │   ├── simulations.py          # /simulations (CRUD)
+│   │   │   └── prediction.py           # /prediction (ML)
 │   │   ├── ml/
-│   │   │   ├── model.joblib          # Modèle Régression Logistique entraîné
-│   │   │   └── predictor.py          # Logique de prédiction + insights
-│   │   ├── models/                   # Modèles SQLAlchemy (User, Simulation, …)
-│   │   ├── schemas/                  # Schémas Pydantic
-│   │   └── main.py                   # Application FastAPI + service des fichiers statiques
-│   ├── scripts/
-│   │   └── train_model.py            # Script d'entraînement du modèle
-│   └── requirements-prod.txt
+│   │   │   ├── predictor.py            # Prédiction + insights contextuels
+│   │   │   └── model.joblib            # Modèle SVM entraîné (généré)
+│   │   ├── models/                     # ORM SQLAlchemy (User, Simulation, AuditLog)
+│   │   ├── schemas/                    # Schémas Pydantic
+│   │   ├── core/                       # Sécurité JWT, config
+│   │   └── database/                   # Session SQLAlchemy
+│   └── scripts/
+│       └── train_model.py              # Entraînement SMOTE + 4 modèles
 ├── notebooks/
-│   ├── analyse_fecondite_edsc.py     # Analyse statistique complète (EDA + ML)
-│   ├── statistiques_completes.py     # Tables et tests pour le mémoire
-│   └── edsc-fecondite/               # Application React (frontend)
-│       └── src/
-│           ├── pages/                # LandingPage, AuthPage, OnboardingPage, ResultsPage, …
-│           ├── store/                # Zustand (état global)
-│           └── lib/                  # Axios API client
-└── data/                             # Données EDSC (non versionnées — .gitignore)
-    └── CMIR71FL.SAV
+│   ├── analyse_statistique_EDSC.ipynb  # Analyse EDA + statistiques pour le mémoire
+│   ├── 02_ml_complet.ipynb             # Pipeline ML complet (SMOTE, SHAP, évaluation)
+│   └── edsc-fecondite/                 # Application React (frontend)
+│       ├── src/
+│       │   ├── pages/                  # LandingPage, AuthPage, OnboardingPage, ResultsPage, DashboardPage
+│       │   ├── store/useStore.ts        # Zustand — état global
+│       │   ├── lib/api.ts              # Client Axios avec intercepteur JWT
+│       │   └── types/index.ts          # Types TypeScript
+│       ├── public/images/
+│       └── package.json
+└── scripts/                            # Scripts utilitaires
 ```
 
 ---
@@ -73,31 +103,67 @@ EDS-Cameroon/
 
 - Python 3.12+
 - Node.js 20+
-- Le fichier de données `CMIR71FL.SAV` placé dans `data/`
+- Le fichier `data/CMIR71FL.SAV` (disponible sur [dhsprogram.com](https://dhsprogram.com))
 
-### 1. Entraîner le modèle
+---
+
+### 1. Préparer le backend
+
+```bash
+cd backend
+
+# Créer et activer le venv
+python -m venv .venv
+.venv\Scripts\activate          # Windows
+# source .venv/bin/activate     # Linux / Mac
+
+# Installer les dépendances
+pip install -r requirements.txt
+```
+
+Créer le fichier `backend/.env` :
+
+```env
+SECRET_KEY=votre-cle-secrete-longue-et-aleatoire
+DATABASE_URL=sqlite:///./hearth.db
+```
+
+---
+
+### 2. Entraîner le modèle ML
+
+Depuis la racine du projet (avec le venv activé) :
 
 ```bash
 python backend/scripts/train_model.py
 ```
 
-> Génère `backend/app/ml/model.joblib`. Nécessite le fichier `data/CMIR71FL.SAV`.
+Ce script :
+- Charge `data/CMIR71FL.SAV` via pyreadstat
+- Applique SMOTE sur le train (80 %)
+- Compare 4 modèles par AUC CV-5
+- Sauvegarde le meilleur dans `backend/app/ml/model.joblib`
 
-### 2. Lancer le backend
+> **Note :** pyreadstat doit être installé dans l'environnement qui lance ce script.  
+> Le backend FastAPI n'a pas besoin de pyreadstat.
+
+---
+
+### 3. Lancer le backend
 
 ```bash
 cd backend
-python -m venv venv
-venv\Scripts\activate          # Windows
-pip install -r requirements-prod.txt
-pip install pyreadstat          # Pour le script d'entraînement uniquement
-python run.py
+python -m uvicorn app.main:app --reload
 ```
 
-Le serveur démarre sur **http://localhost:8000**.  
-Documentation API interactive : **http://localhost:8000/docs**
+- API disponible sur **http://localhost:8000**
+- Documentation interactive : **http://localhost:8000/docs**
 
-### 3. Mode développement frontend (optionnel)
+---
+
+### 4. Lancer le frontend (développement)
+
+Dans un second terminal :
 
 ```bash
 cd notebooks/edsc-fecondite
@@ -105,37 +171,75 @@ npm install
 npm run dev
 ```
 
-Frontend accessible sur **http://localhost:5173** avec proxy vers le backend.
+Application accessible sur **http://localhost:5173** (proxy Vite → backend port 8000).
 
-### 4. Mode production (backend sert le frontend)
+---
+
+### 5. Mode production (backend sert le frontend)
 
 ```bash
-# Compiler le frontend
+# 1. Compiler le frontend
 cd notebooks/edsc-fecondite
 npm run build
 
-# Copier le build dans backend/static/
+# 2. Copier le build dans backend/static/
 xcopy /E /I dist ..\..\..\backend\static\   # Windows
-# ou
-cp -r dist ../../../backend/static/          # Linux/Mac
+# cp -r dist ../../../backend/static/       # Linux/Mac
 
-# Démarrer le backend
+# 3. Démarrer le backend
 cd backend
-python run.py
+python -m uvicorn app.main:app
 ```
 
 L'application complète est accessible sur **http://localhost:8000**.
 
 ---
 
-## Variables d'environnement
+## API — Endpoints principaux
 
-Créer un fichier `backend/.env` (copier depuis `backend/.env.example`) :
+| Méthode | Route | Auth | Description |
+|---|---|---|---|
+| `POST` | `/auth/register` | — | Créer un compte (nom, email, mdp, sexe) |
+| `POST` | `/auth/login` | — | Connexion — retourne JWT |
+| `POST` | `/auth/forgot-password` | — | Demande de réinitialisation de mot de passe |
+| `GET` | `/users/me` | JWT | Profil utilisateur |
+| `PUT` | `/users/me` | JWT | Mettre à jour le profil |
+| `POST` | `/simulations` | JWT | Créer et sauvegarder une simulation |
+| `GET` | `/simulations` | JWT | Historique des simulations |
+| `DELETE` | `/simulations/{id}` | JWT | Supprimer une simulation |
+| `POST` | `/prediction` | JWT | Prédiction ML brute |
+| `GET` | `/health` | — | État du serveur |
 
-```env
-SECRET_KEY=votre-cle-secrete-longue-et-aleatoire
-DATABASE_URL=sqlite:///./hearth.db
-```
+---
+
+## Variables prédictives
+
+| Variable | Code DHS | Type | Description |
+|---|---|---|---|
+| `age` | v012 | Numérique | Âge de la femme (15–49 ans) |
+| `niveau_instruction` | v106 | Ordinal (0–3) | Aucun / Primaire / Secondaire / Supérieur |
+| `nb_enfants_vivants` | v218 | Numérique | Nombre d'enfants vivants |
+| `contraceptif` | v313 | Binaire | Utilisation d'un contraceptif |
+| `statut_matrimonial` | v501 | Catégoriel | Célibataire / Marié(e) / Union libre / … |
+| `milieu_residence` | v025 | Binaire | 1 = Urbain / 2 = Rural |
+| `quintile_richesse` | v190 | Ordinal (1–5) | Indice de richesse du ménage |
+| `travail` | v714 | Binaire | Activité professionnelle |
+| `region_nord` | v024 | Binaire | Adamaoua, Extrême-Nord ou Nord |
+| `religion_musulman` | v130 | Binaire | Religion musulmane |
+
+**Variable cible :** `v602` — désir d'avoir un autre enfant (1 = Désire, 0 = Ne désire pas)
+
+---
+
+## Source des données
+
+- **Enquête Démographique et de Santé du Cameroun — EDSC-V 2018**
+- Institut National de la Statistique (INS) du Cameroun
+- Fichier Individual Recode (IR) : `CMIR71FL.SAV`
+- Échantillon analysé : **13 527 femmes** de 15 à 49 ans
+- Prévalence du désir d'enfant : **94.5 %**
+
+Les données brutes ne sont pas versionnées (taille > 100 Mo). Disponibles sur [dhsprogram.com](https://dhsprogram.com) (accès libre après inscription).
 
 ---
 
@@ -148,46 +252,6 @@ DATABASE_URL=sqlite:///./hearth.db
 5. Déployer
 
 Le Dockerfile compile le frontend React (Stage 1) et l'intègre dans l'image Python (Stage 2). Une seule URL suffit pour l'application complète.
-
----
-
-## API — Principaux endpoints
-
-| Méthode | Route | Description |
-|---|---|---|
-| `POST` | `/auth/register` | Créer un compte |
-| `POST` | `/auth/login` | Connexion (retourne JWT) |
-| `GET` | `/users/me` | Profil utilisateur |
-| `POST` | `/prediction` | Prédiction ML |
-| `POST` | `/simulations` | Créer + sauvegarder une simulation |
-| `GET` | `/simulations` | Historique des simulations |
-| `DELETE` | `/simulations/{id}` | Supprimer une simulation |
-| `GET` | `/health` | Vérification de l'état du serveur |
-
----
-
-## Source des données
-
-- **Enquête Démographique et de Santé du Cameroun — EDSC-V 2018**
-- Institut National de la Statistique (INS) du Cameroun
-- Fichier Individual Recode (IR) : `CMIR71FL.SAV`
-- Echantillon analysé : **13 527 femmes** de 15 à 49 ans
-- Variable cible : `v602` — désir d'avoir un autre enfant (binaire)
-
-Les données brutes ne sont pas versionnées (taille > 100 Mo). Elles sont disponibles sur le site du [DHS Program](https://dhsprogram.com).
-
----
-
-## Résultats du modèle
-
-| Métrique | Valeur |
-|---|---|
-| Prévalence du désir | 94.5 % |
-| Accuracy (test) | 93.7 % |
-| ROC-AUC (test, CV-5) | 0.80 |
-| Facteurs significatifs | Âge, Nb enfants vivants, Statut matrimonial, Contraceptif, Quintile de richesse |
-
-La Régression Logistique a été sélectionnée car elle offre le meilleur AUC (0.80) sans overfitting (gap Train/Test = 0.00), contrairement au Random Forest (gap = 0.26 — overfitting sévère).
 
 ---
 

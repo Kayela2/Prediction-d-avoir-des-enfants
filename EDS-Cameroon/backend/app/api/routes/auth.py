@@ -6,7 +6,7 @@ from ...database.session import get_db
 from ...models.audit_log import AuditLog
 from ...models.user import User
 from ...schemas.token import Token
-from ...schemas.user import UserCreate, UserLogin, UserOut
+from ...schemas.user import ForgotPasswordRequest, UserCreate, UserLogin, UserOut
 
 router = APIRouter()
 
@@ -23,6 +23,7 @@ def register(payload: UserCreate, request: Request, db: Session = Depends(get_db
         name=payload.name,
         email=payload.email,
         hashed_password=hash_password(payload.password),
+        sexe=payload.sexe,
     )
     db.add(user)
     db.flush()
@@ -68,3 +69,10 @@ def login(payload: UserLogin, request: Request, db: Session = Depends(get_db)):
     db.commit()
 
     return Token(access_token=token)
+
+
+@router.post("/forgot-password")
+def forgot_password(payload: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    # On vérifie silencieusement (on ne révèle pas si l'email existe ou non)
+    db.query(User).filter(User.email == payload.email).first()
+    return {"message": "Si cet email est enregistré, vous recevrez un lien de réinitialisation."}

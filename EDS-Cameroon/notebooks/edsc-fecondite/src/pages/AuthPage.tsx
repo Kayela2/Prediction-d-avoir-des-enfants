@@ -3,6 +3,26 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Eye, EyeOff, Mail, Lock, User, ArrowRight, CheckCircle, AlertCircle, ArrowLeft, Heart } from 'lucide-react'
 import { useStore } from '../store/useStore'
+import { api } from '../lib/api'
+
+function GoogleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+    </svg>
+  )
+}
+
+function AppleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.7 9.05 7.42c1.39.07 2.36.74 3.17.8 1.21-.24 2.37-.93 3.67-.84 1.58.13 2.77.71 3.55 1.84-3.25 1.94-2.49 5.9.48 7.06-.57 1.52-1.32 3.01-2.87 4zm-3.22-17.6c.06 2.28-1.79 4.16-3.89 3.99-.27-2.08 1.68-4.09 3.89-3.99z" fill="#000"/>
+    </svg>
+  )
+}
 
 const fadeUp = { hidden:{opacity:0,y:24}, show:{opacity:1,y:0,transition:{duration:0.5,ease:'easeOut'}} } satisfies import('framer-motion').Variants
 const stagger = { show:{transition:{staggerChildren:0.08}} } satisfies import('framer-motion').Variants
@@ -18,12 +38,16 @@ export default function AuthPage() {
   const nav = useNavigate()
   const { login, register, authLoading, authError, setAuthError } = useStore()
 
-  const [mode, setMode] = useState<'login'|'register'>('login')
+  const [mode, setMode] = useState<'login'|'register'|'forgot'>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
+  const [sexe, setSexe] = useState<'homme'|'femme'|null>(null)
   const [showPwd, setShowPwd] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [forgotSent, setForgotSent] = useState(false)
+  const [forgotLoading, setForgotLoading] = useState(false)
+  const [forgotError, setForgotError] = useState<string|null>(null)
 
   async function handleSubmit(e: { preventDefault():void }) {
     e.preventDefault()
@@ -32,12 +56,26 @@ export default function AuthPage() {
       if (mode === 'login') {
         await login(email, password)
       } else {
-        await register(name, email, password)
+        await register(name, email, password, sexe ?? undefined)
       }
       setSuccess(true)
       setTimeout(() => nav('/dashboard'), 1200)
     } catch {
       // authError est déjà mis à jour dans le store
+    }
+  }
+
+  async function handleForgot(e: { preventDefault():void }) {
+    e.preventDefault()
+    setForgotLoading(true)
+    setForgotError(null)
+    try {
+      await api.post('/auth/forgot-password', { email })
+      setForgotSent(true)
+    } catch {
+      setForgotError('Une erreur est survenue. Veuillez réessayer.')
+    } finally {
+      setForgotLoading(false)
     }
   }
 
@@ -92,18 +130,80 @@ export default function AuthPage() {
 
         <div style={{ width: '100%', maxWidth: 400 }}>
 
-          {/* Tab switcher */}
-          <div style={{ display: 'flex', background: '#F1F5F9', borderRadius: 14, padding: 4, marginBottom: 32 }}>
-            {(['login','register'] as const).map(m => (
-              <button key={m} onClick={() => setMode(m)}
-                style={{ flex: 1, padding: '11px', borderRadius: 11, border: 'none', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', background: mode === m ? 'white' : 'transparent', color: mode === m ? '#0F172A' : '#64748B', boxShadow: mode === m ? '0 2px 8px rgba(0,0,0,0.1)' : 'none' }}>
-                {m === 'login' ? 'Se connecter' : 'S\'inscrire'}
-              </button>
-            ))}
-          </div>
+          {/* Tab switcher — caché en mode forgot */}
+          {mode !== 'forgot' && (
+            <div style={{ display: 'flex', background: '#F1F5F9', borderRadius: 14, padding: 4, marginBottom: 32 }}>
+              {(['login','register'] as const).map(m => (
+                <button key={m} onClick={() => setMode(m)}
+                  style={{ flex: 1, padding: '11px', borderRadius: 11, border: 'none', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', background: mode === m ? 'white' : 'transparent', color: mode === m ? '#0F172A' : '#64748B', boxShadow: mode === m ? '0 2px 8px rgba(0,0,0,0.1)' : 'none' }}>
+                  {m === 'login' ? 'Se connecter' : 'S\'inscrire'}
+                </button>
+              ))}
+            </div>
+          )}
 
           <AnimatePresence mode="wait">
-            <motion.div key={mode} initial={{ opacity:0, x:mode==='login'?-20:20 }} animate={{ opacity:1, x:0 }} exit={{ opacity:0 }} transition={{ duration:0.25 }}>
+            <motion.div key={mode} initial={{ opacity:0, x: mode==='forgot' ? 0 : mode==='login'?-20:20 }} animate={{ opacity:1, x:0 }} exit={{ opacity:0 }} transition={{ duration:0.25 }}>
+
+            {/* ── Vue Mot de passe oublié ── */}
+            {mode === 'forgot' && (
+              <motion.div variants={stagger} initial="hidden" animate="show">
+                <motion.div variants={fadeUp}>
+                  <button onClick={() => { setMode('login'); setForgotSent(false); setForgotError(null) }}
+                    style={{ display:'flex', alignItems:'center', gap:6, background:'none', border:'none', color:'#6366F1', fontWeight:600, fontSize:13, cursor:'pointer', fontFamily:'inherit', marginBottom:20, padding:0 }}>
+                    <ArrowLeft size={14}/> Retour à la connexion
+                  </button>
+                  <h1 style={{ fontSize:26, fontWeight:900, color:'#0F172A', letterSpacing:'-0.03em', marginBottom:6 }}>Mot de passe oublié 🔑</h1>
+                  <p style={{ fontSize:14, color:'#64748B', marginBottom:28, lineHeight:1.6 }}>
+                    Entrez votre email et nous vous enverrons un lien pour réinitialiser votre mot de passe.
+                  </p>
+                </motion.div>
+
+                {!forgotSent ? (
+                  <form onSubmit={handleForgot}>
+                    <motion.div variants={fadeUp} style={{ marginBottom:20 }}>
+                      <label style={{ display:'block', fontSize:13, fontWeight:600, color:'#374151', marginBottom:8 }}>Adresse e-mail</label>
+                      <div style={{ position:'relative' }}>
+                        <Mail size={16} color="#9CA3AF" style={{ position:'absolute', left:14, top:'50%', transform:'translateY(-50%)' }}/>
+                        <input type="email" placeholder="vous@exemple.com" value={email} onChange={e=>setEmail(e.target.value)} required
+                          style={{ width:'100%', padding:'13px 14px 13px 42px', background:'#F9FAFB', border:'1.5px solid #E5E7EB', borderRadius:12, fontSize:14, color:'#111827', fontFamily:'inherit', outline:'none', transition:'border 0.15s' }}
+                          onFocus={e=>(e.target.style.borderColor='#6366F1')} onBlur={e=>(e.target.style.borderColor='#E5E7EB')}/>
+                      </div>
+                    </motion.div>
+
+                    {forgotError && (
+                      <motion.div initial={{opacity:0,y:-6}} animate={{opacity:1,y:0}}
+                        style={{ display:'flex', alignItems:'center', gap:8, padding:'11px 14px', background:'#FEF2F2', border:'1px solid #FECACA', borderRadius:10, marginBottom:16 }}>
+                        <AlertCircle size={15} color="#EF4444" style={{flexShrink:0}}/>
+                        <span style={{ fontSize:13, color:'#B91C1C', fontWeight:500 }}>{forgotError}</span>
+                      </motion.div>
+                    )}
+
+                    <motion.button variants={fadeUp} type="submit" disabled={forgotLoading}
+                      style={{ width:'100%', padding:'15px', background: forgotLoading ? '#A5B4FC' : 'linear-gradient(135deg,#6366F1,#8B5CF6)', color:'white', border:'none', borderRadius:999, fontSize:15, fontWeight:700, cursor: forgotLoading ? 'not-allowed':'pointer', fontFamily:'inherit', boxShadow: forgotLoading ? 'none' : '0 6px 24px rgba(99,102,241,0.45)', transition:'all 0.3s', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+                      {forgotLoading ? <><Spinner/> Envoi…</> : <>Envoyer le lien <ArrowRight size={16}/></>}
+                    </motion.button>
+                  </form>
+                ) : (
+                  <motion.div initial={{opacity:0,scale:0.95}} animate={{opacity:1,scale:1}} transition={{duration:0.4}}
+                    style={{ textAlign:'center', padding:'32px 0' }}>
+                    <div style={{ width:64, height:64, background:'#ECFDF5', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 20px' }}>
+                      <CheckCircle size={32} color="#10B981"/>
+                    </div>
+                    <h2 style={{ fontSize:20, fontWeight:800, color:'#0F172A', marginBottom:10 }}>Email envoyé !</h2>
+                    <p style={{ fontSize:14, color:'#64748B', lineHeight:1.6, marginBottom:28 }}>
+                      Si <strong>{email}</strong> est enregistré, vous recevrez un lien de réinitialisation dans quelques minutes. Vérifiez aussi vos spams.
+                    </p>
+                    <button onClick={() => { setMode('login'); setForgotSent(false); setEmail('') }}
+                      style={{ padding:'12px 28px', background:'linear-gradient(135deg,#6366F1,#8B5CF6)', color:'white', border:'none', borderRadius:999, fontSize:14, fontWeight:700, cursor:'pointer', fontFamily:'inherit', boxShadow:'0 4px 16px rgba(99,102,241,0.35)' }}>
+                      Retour à la connexion
+                    </button>
+                  </motion.div>
+                )}
+              </motion.div>
+            )}
+
+            {mode !== 'forgot' && (
               <motion.div variants={stagger} initial="hidden" animate="show">
                 <motion.div variants={fadeUp}>
                   <h1 style={{ fontSize: 26, fontWeight: 900, color: '#0F172A', letterSpacing: '-0.03em', marginBottom: 6 }}>
@@ -116,15 +216,30 @@ export default function AuthPage() {
 
                 <form onSubmit={handleSubmit}>
                   {mode === 'register' && (
-                    <motion.div variants={fadeUp} style={{ marginBottom: 16 }}>
-                      <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 8 }}>Nom complet</label>
-                      <div style={{ position: 'relative' }}>
-                        <User size={16} color="#9CA3AF" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }} />
-                        <input type="text" placeholder="Marie Nguema" value={name} onChange={e => setName(e.target.value)}
-                          style={{ width: '100%', padding: '13px 14px 13px 42px', background: '#F9FAFB', border: '1.5px solid #E5E7EB', borderRadius: 12, fontSize: 14, color: '#111827', fontFamily: 'inherit', outline: 'none', transition: 'border 0.15s' }}
-                          onFocus={e=>(e.target.style.borderColor='#6366F1')} onBlur={e=>(e.target.style.borderColor='#E5E7EB')} />
-                      </div>
-                    </motion.div>
+                    <>
+                      <motion.div variants={fadeUp} style={{ marginBottom: 16 }}>
+                        <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 8 }}>Nom complet</label>
+                        <div style={{ position: 'relative' }}>
+                          <User size={16} color="#9CA3AF" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }} />
+                          <input type="text" placeholder="Marie Nguema" value={name} onChange={e => setName(e.target.value)}
+                            style={{ width: '100%', padding: '13px 14px 13px 42px', background: '#F9FAFB', border: '1.5px solid #E5E7EB', borderRadius: 12, fontSize: 14, color: '#111827', fontFamily: 'inherit', outline: 'none', transition: 'border 0.15s' }}
+                            onFocus={e=>(e.target.style.borderColor='#6366F1')} onBlur={e=>(e.target.style.borderColor='#E5E7EB')} />
+                        </div>
+                      </motion.div>
+
+                      <motion.div variants={fadeUp} style={{ marginBottom: 16 }}>
+                        <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 8 }}>Vous êtes</label>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                          {(['femme', 'homme'] as const).map(s => (
+                            <button key={s} type="button" onClick={() => setSexe(s)}
+                              style={{ padding: '12px', borderRadius: 12, border: `1.5px solid ${sexe === s ? '#6366F1' : '#E5E7EB'}`, background: sexe === s ? '#EEF2FF' : '#F9FAFB', fontSize: 14, fontWeight: sexe === s ? 700 : 500, color: sexe === s ? '#4338CA' : '#6B7280', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                              <span style={{ fontSize: 18 }}>{s === 'femme' ? '👩' : '👨'}</span>
+                              {s === 'femme' ? 'Une femme' : 'Un homme'}
+                            </button>
+                          ))}
+                        </div>
+                      </motion.div>
+                    </>
                   )}
 
                   <motion.div variants={fadeUp} style={{ marginBottom: 16 }}>
@@ -140,7 +255,7 @@ export default function AuthPage() {
                   <motion.div variants={fadeUp} style={{ marginBottom: 24 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                       <label style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>Mot de passe</label>
-                      {mode === 'login' && <button type="button" style={{ background: 'none', border: 'none', fontSize: 12, color: '#6366F1', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Mot de passe oublié ?</button>}
+                      {mode === 'login' && <button type="button" onClick={() => { setMode('forgot'); setForgotSent(false); setForgotError(null) }} style={{ background: 'none', border: 'none', fontSize: 12, color: '#6366F1', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Mot de passe oublié ?</button>}
                     </div>
                     <div style={{ position: 'relative' }}>
                       <Lock size={16} color="#9CA3AF" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }} />
@@ -177,11 +292,15 @@ export default function AuthPage() {
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 }}>
-                    {[{ label:'Google', icon:'🔵' }, { label:'Apple', icon:'🍎' }].map(({ label, icon }) => (
+                    {[
+                      { label:'Google', Icon: GoogleIcon },
+                      { label:'Apple',  Icon: AppleIcon  },
+                    ].map(({ label, Icon }) => (
                       <button key={label} type="button"
+                        title={`Connexion ${label} — disponible en production`}
                         style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px', background: '#F9FAFB', border: '1.5px solid #E5E7EB', borderRadius: 12, fontSize: 14, fontWeight: 600, color: '#111827', cursor: 'pointer', fontFamily: 'inherit', transition: 'background 0.15s' }}
                         onMouseOver={e=>(e.currentTarget.style.background='#F3F4F6')} onMouseOut={e=>(e.currentTarget.style.background='#F9FAFB')}>
-                        <span>{icon}</span>{label}
+                        <Icon/>{label}
                       </button>
                     ))}
                   </div>
@@ -194,6 +313,7 @@ export default function AuthPage() {
                   </button>
                 </div>
               </motion.div>
+            )}
             </motion.div>
           </AnimatePresence>
         </div>

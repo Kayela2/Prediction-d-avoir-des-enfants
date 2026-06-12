@@ -7,6 +7,7 @@ class UserCreate(BaseModel):
     name: str
     email: EmailStr
     password: str
+    sexe: str | None = None  # "homme" | "femme"
 
     @field_validator("password")
     @classmethod
@@ -25,6 +26,7 @@ class UserOut(BaseModel):
     id: str
     name: str
     email: str
+    sexe: str | None
     avatar_url: str | None
     plan: str
     created_at: datetime
@@ -35,3 +37,7 @@ class UserOut(BaseModel):
 class UserUpdate(BaseModel):
     name: str | None = None
     avatar_url: str | None = None
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr

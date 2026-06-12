@@ -6,6 +6,7 @@ data/
 
 # ── Python ─────────────────────────────────────────────────────────────────────
 backend/venv/
+backend/.venv/
 **/__pycache__/
 **/*.pyc
 **/*.pyo
@@ -35,3 +36,6 @@ Thumbs.db
 
 # ── Logs ──────────────────────────────────────────────────────────────────────
 *.log
+
+# ── Claude Code (sessions personnelles — ne pas versionner) ───────────────────
+.claude/

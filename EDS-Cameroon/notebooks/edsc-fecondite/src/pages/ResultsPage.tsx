@@ -359,7 +359,7 @@ export default function ResultsPage() {
         <motion.div variants={fadeUp} style={{ marginTop:16, background:'white', borderRadius:14, padding:'13px 18px', border:`1px solid ${BORD}`, display:'flex', gap:10, alignItems:'center' }}>
           <span style={{ fontSize:18, flexShrink:0 }}>🇨🇲</span>
           <p style={{ fontSize:12, color:MUTED, margin:0, lineHeight:1.5 }}>
-            <strong style={{ color:NAVY }}>Source :</strong> Enquête Démographique et de Santé du Cameroun (EDSC-V 2018) · INS · Régression Logistique entraînée sur 13 527 femmes de 15–49 ans.
+            <strong style={{ color:NAVY }}>Source :</strong> Enquête Démographique et de Santé du Cameroun (EDSC-V 2018) · INS · {simFromHistory?.model_used ?? 'SVM calibré (noyau RBF)'} entraîné sur 13 527 femmes de 15–49 ans.
           </p>
           <button onClick={() => nav('/simulation')} className="no-print"
             style={{ marginLeft:'auto', flexShrink:0, padding:'7px 16px', background:PLT, border:`1px solid ${P}22`, borderRadius:999, fontSize:12, fontWeight:700, color:P, cursor:'pointer', fontFamily:'inherit', whiteSpace:'nowrap' }}>

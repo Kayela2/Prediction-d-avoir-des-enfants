@@ -103,7 +103,7 @@ export default function LandingPage() {
 
             {/* Trust row */}
             <motion.div variants={fadeUp} style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
-              {[{ v:'13 527', l:'Femmes analysées' }, { v:'93.7%', l:'Précision modèle' }, { v:'10', l:'Facteurs clés' }].map(({ v, l }) => (
+              {[{ v:'13 527', l:'Femmes analysées' }, { v:'93.7%', l:'Précision modèle' }, { v:'19', l:'Facteurs clés' }].map(({ v, l }) => (
                 <div key={l} style={{ display: 'flex', flexDirection: 'column' }}>
                   <span style={{ fontSize: 22, fontWeight: 900, color: 'white', letterSpacing: '-0.03em' }}>{v}</span>
                   <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', fontWeight: 500 }}>{l}</span>
@@ -222,7 +222,7 @@ export default function LandingPage() {
             { icon: Database, v:'13 527',  l:'Femmes EDSC-V 2018',    c:'#6366F1' },
             { icon: Globe,    v:'10',       l:'Régions du Cameroun',   c:'#10B981' },
             { icon: Target,   v:'93.7 %',   l:'Précision du modèle',   c:'#F59E0B' },
-            { icon: Users,    v:'10',        l:'Facteurs prédictifs',   c:'#8B5CF6' },
+            { icon: Users,    v:'19',        l:'Facteurs prédictifs',   c:'#8B5CF6' },
           ].map(({ icon: Icon, v, l, c }) => (
             <motion.div key={l} initial={{ opacity:0, y:20 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }} transition={{ duration:0.5 }}
               style={{ textAlign:'center' }}>

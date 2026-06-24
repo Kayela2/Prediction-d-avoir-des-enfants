@@ -75,6 +75,7 @@ interface AppState {
   predictionResult: PredictionResult | null
   authLoading: boolean
   authError: string | null
+  authChecked: boolean   // true une fois la vérification initiale du token terminée
 
   setUser: (user: User | null) => void
   setSimData: (data: Partial<SimulationData>) => void
@@ -100,6 +101,7 @@ export const useStore = create<AppState>((set, get) => ({
   predictionResult: null,
   authLoading: false,
   authError: null,
+  authChecked: false,
 
   setUser: (user) => set({ user }),
   setSimData: (data) => set((s) => ({ currentSimData: { ...s.currentSimData, ...data } })),
@@ -162,6 +164,9 @@ export const useStore = create<AppState>((set, get) => ({
       })
     } catch {
       localStorage.removeItem('token')
+      set({ user: null })
+    } finally {
+      set({ authChecked: true })
     }
   },
 

@@ -3,11 +3,29 @@ from datetime import datetime
 from pydantic import BaseModel, EmailStr, field_validator
 
 
+def _normalize_email(v: str) -> str:
+    """Normalise l'email (minuscules + espaces retirés) pour une reconnaissance
+    cohérente entre l'inscription et la connexion."""
+    return v.strip().lower()
+
+
 class UserCreate(BaseModel):
     name: str
     email: EmailStr
     password: str
     sexe: str | None = None  # "homme" | "femme"
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, v: str) -> str:
+        return _normalize_email(v)
+
+    @field_validator("name")
+    @classmethod
+    def name_not_empty(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("Le nom est obligatoire")
+        return v.strip()
 
     @field_validator("password")
     @classmethod
@@ -20,6 +38,11 @@ class UserCreate(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, v: str) -> str:
+        return _normalize_email(v)
 
 
 class UserOut(BaseModel):
@@ -41,3 +64,8 @@ class UserUpdate(BaseModel):
 
 class ForgotPasswordRequest(BaseModel):
     email: EmailStr
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, v: str) -> str:
+        return _normalize_email(v)

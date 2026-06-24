@@ -18,21 +18,12 @@ def create_simulation(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    result = predictor.predict(payload.model_dump())
+    data = payload.model_dump()
+    result = predictor.predict(data)
 
     sim = Simulation(
         user_id=current_user.id,
-        title=payload.title,
-        age=payload.age,
-        niveau_instruction=payload.niveau_instruction,
-        nb_enfants_vivants=payload.nb_enfants_vivants,
-        contraceptif=payload.contraceptif,
-        statut_matrimonial=payload.statut_matrimonial,
-        milieu_residence=payload.milieu_residence,
-        quintile_richesse=payload.quintile_richesse,
-        travail=payload.travail,
-        region_nord=payload.region_nord,
-        religion_musulman=payload.religion_musulman,
+        **data,  # title + les 19 variables EDSC-V
         desire_enfant=result["desire_enfant"],
         probability=result["probability"],
         confidence=result["confidence"],

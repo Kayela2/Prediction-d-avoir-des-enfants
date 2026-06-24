@@ -5,16 +5,23 @@ data/
 *.dta
 
 # ── Python ─────────────────────────────────────────────────────────────────────
+venv/
+.venv/
 backend/venv/
 backend/.venv/
 **/__pycache__/
 **/*.pyc
 **/*.pyo
 backend/.env
+hearth.db
 backend/hearth.db
-backend/*.db
+**/*.db
 *.egg-info/
 .pytest_cache/
+.ipynb_checkpoints/
+
+# ── Fichiers temporaires bureautiques (verrous Word/Excel) ───────────────────
+~$*
 
 # ── Node ───────────────────────────────────────────────────────────────────────
 notebooks/edsc-fecondite/node_modules/

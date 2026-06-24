@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Eye, EyeOff, Mail, Lock, User, ArrowRight, CheckCircle, AlertCircle, ArrowLeft, Heart } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { api } from '../lib/api'
+import Button from '../components/ui/Button'
 
 function GoogleIcon() {
   return (
@@ -38,7 +39,8 @@ export default function AuthPage() {
   const nav = useNavigate()
   const { login, register, authLoading, authError, setAuthError } = useStore()
 
-  const [mode, setMode] = useState<'login'|'register'|'forgot'>('login')
+  // Inscription mise en avant par défaut pour les nouveaux utilisateurs
+  const [mode, setMode] = useState<'login'|'register'|'forgot'>('register')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
@@ -59,7 +61,10 @@ export default function AuthPage() {
         await register(name, email, password, sexe ?? undefined)
       }
       setSuccess(true)
-      setTimeout(() => nav('/dashboard'), 1200)
+      // Si des données de simulation ont été saisies avant connexion, on y retourne
+      // pour restaurer et relancer automatiquement la prédiction.
+      const dest = localStorage.getItem('hearth_pending_sim') ? '/simulation' : '/dashboard'
+      setTimeout(() => nav(dest), 1200)
     } catch {
       // authError est déjà mis à jour dans le store
     }
@@ -133,7 +138,7 @@ export default function AuthPage() {
           {/* Tab switcher — caché en mode forgot */}
           {mode !== 'forgot' && (
             <div style={{ display: 'flex', background: '#F1F5F9', borderRadius: 14, padding: 4, marginBottom: 32 }}>
-              {(['login','register'] as const).map(m => (
+              {(['register','login'] as const).map(m => (
                 <button key={m} onClick={() => setMode(m)}
                   style={{ flex: 1, padding: '11px', borderRadius: 11, border: 'none', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', background: mode === m ? 'white' : 'transparent', color: mode === m ? '#0F172A' : '#64748B', boxShadow: mode === m ? '0 2px 8px rgba(0,0,0,0.1)' : 'none' }}>
                   {m === 'login' ? 'Se connecter' : 'S\'inscrire'}
@@ -179,10 +184,12 @@ export default function AuthPage() {
                       </motion.div>
                     )}
 
-                    <motion.button variants={fadeUp} type="submit" disabled={forgotLoading}
-                      style={{ width:'100%', padding:'15px', background: forgotLoading ? '#A5B4FC' : 'linear-gradient(135deg,#6366F1,#8B5CF6)', color:'white', border:'none', borderRadius:999, fontSize:15, fontWeight:700, cursor: forgotLoading ? 'not-allowed':'pointer', fontFamily:'inherit', boxShadow: forgotLoading ? 'none' : '0 6px 24px rgba(99,102,241,0.45)', transition:'all 0.3s', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
-                      {forgotLoading ? <><Spinner/> Envoi…</> : <>Envoyer le lien <ArrowRight size={16}/></>}
-                    </motion.button>
+                    <motion.div variants={fadeUp}>
+                      <Button type="submit" size="lg" fullWidth loading={forgotLoading}
+                        rightIcon={<ArrowRight size={16}/>}>
+                        {forgotLoading ? 'Envoi…' : 'Envoyer le lien'}
+                      </Button>
+                    </motion.div>
                   </form>
                 ) : (
                   <motion.div initial={{opacity:0,scale:0.95}} animate={{opacity:1,scale:1}} transition={{duration:0.4}}
@@ -221,7 +228,7 @@ export default function AuthPage() {
                         <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 8 }}>Nom complet</label>
                         <div style={{ position: 'relative' }}>
                           <User size={16} color="#9CA3AF" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }} />
-                          <input type="text" placeholder="Marie Nguema" value={name} onChange={e => setName(e.target.value)}
+                          <input type="text" placeholder="Marie Nguema" value={name} onChange={e => setName(e.target.value)} required
                             style={{ width: '100%', padding: '13px 14px 13px 42px', background: '#F9FAFB', border: '1.5px solid #E5E7EB', borderRadius: 12, fontSize: 14, color: '#111827', fontFamily: 'inherit', outline: 'none', transition: 'border 0.15s' }}
                             onFocus={e=>(e.target.style.borderColor='#6366F1')} onBlur={e=>(e.target.style.borderColor='#E5E7EB')} />
                         </div>
@@ -279,10 +286,14 @@ export default function AuthPage() {
                   )}
 
                   {/* Submit */}
-                  <motion.button variants={fadeUp} type="submit" disabled={authLoading || success}
-                    style={{ width: '100%', padding: '15px', background: success ? '#10B981' : authLoading ? '#A5B4FC' : 'linear-gradient(135deg,#6366F1,#8B5CF6)', color: 'white', border: 'none', borderRadius: 999, fontSize: 15, fontWeight: 700, cursor: authLoading||success ? 'not-allowed':'pointer', fontFamily: 'inherit', boxShadow: success ? '0 4px 20px rgba(16,185,129,0.4)' : authLoading ? 'none' : '0 6px 24px rgba(99,102,241,0.45)', transition: 'all 0.3s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 20 }}>
-                    {success ? <><CheckCircle size={18} /> Redirection…</> : authLoading ? <><Spinner /> Chargement…</> : <>{mode === 'login' ? 'Se connecter' : 'Créer mon compte'} <ArrowRight size={16} /></>}
-                  </motion.button>
+                  <motion.div variants={fadeUp} style={{ marginBottom: 20 }}>
+                    <Button type="submit" size="lg" fullWidth loading={authLoading} disabled={success}
+                      leftIcon={success ? <CheckCircle size={18} /> : undefined}
+                      rightIcon={!success && !authLoading ? <ArrowRight size={16} /> : undefined}
+                      style={success ? { background: '#10B981', boxShadow: '0 4px 20px rgba(16,185,129,0.4)' } : undefined}>
+                      {success ? 'Redirection…' : authLoading ? 'Chargement…' : (mode === 'login' ? 'Se connecter' : 'Créer mon compte')}
+                    </Button>
+                  </motion.div>
 
                   {/* Divider */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
@@ -324,8 +335,4 @@ export default function AuthPage() {
       `}</style>
     </div>
   )
-}
-
-function Spinner() {
-  return <div style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,0.4)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
 }

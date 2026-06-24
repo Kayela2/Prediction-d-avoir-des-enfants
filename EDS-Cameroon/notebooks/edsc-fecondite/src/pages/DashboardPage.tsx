@@ -22,7 +22,6 @@ export default function DashboardPage() {
   const nav = useNavigate()
   const { user, simulations } = useStore()
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { useStore.getState().fetchSimulations() }, [])
 
   const avg    = Math.round(simulations.reduce((s,x) => s+(x.confidence??0),0) / (simulations.length||1))
@@ -170,8 +169,8 @@ export default function DashboardPage() {
                     </div>
                     <div style={{ display:'flex', gap:6, marginTop:6, flexWrap:'wrap' }}>
                       <MTag icon={<Baby size={9}/>}         label={`${sim.age} ans`} />
-                      <MTag icon={<MapPin size={9}/>}       label={sim.milieu_residence===1?'Urbain':'Rural'} />
-                      <MTag icon={<GraduationCap size={9}/>} label={['Aucun','Primaire','Secondaire','Supérieur'][sim.niveau_instruction]??'–'} />
+                      <MTag icon={<MapPin size={9}/>}       label={sim.residence_rural===1?'Rural':'Urbain'} />
+                      <MTag icon={<GraduationCap size={9}/>} label={['Aucun','Primaire','Secondaire','Supérieur'][sim.instruction]??'–'} />
                     </div>
                   </div>
                   <ArrowRight size={15} color="var(--border-2)" style={{ flexShrink:0 }} />

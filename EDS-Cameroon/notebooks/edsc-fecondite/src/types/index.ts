@@ -11,20 +11,23 @@ export type Milieu      = 'urbain' | 'rural'
 export type Instruction = 'aucun' | 'primaire' | 'secondaire' | 'superieur'
 export type Quintile    = 1 | 2 | 3 | 4 | 5
 
+// 0=Aucun 1=Trad 2=Moderne
+export type ContraceptifType = 0 | 1 | 2
+
 export interface SimulationData {
   age: number
   milieu: Milieu
   instruction: Instruction
   nbEnfants: number
   quintile: Quintile
-  statutMatrimonial: number  // 1-5
-  contraceptif: number       // 0 ou 1
-  travail: number            // 0=Non 1=Oui
+  statutMatrimonial: number  // 0=Jamais mariée 1=Mariée 2=Union libre 3=Veuve 4=Divorcée 5=Séparée
+  contraceptifType: ContraceptifType
+  emploi: number             // 0=Non 1=Oui
   regionNord: number         // 0 ou 1
-  religionMusulman: number   // 0 ou 1
+  religionCode: number       // code brut v130 (1-6, 0=non renseigné)
 }
 
-// Simulation telle que retournée par le backend (snake_case converti)
+// Simulation telle que retournée par le backend (encodage corrigé EDSC-V)
 export interface Simulation {
   id: string
   user_id: string
@@ -34,15 +37,24 @@ export interface Simulation {
   confidence: number | null
   icon: string
   age: number
-  niveau_instruction: number
-  nb_enfants_vivants: number
-  contraceptif: number
-  statut_matrimonial: number
-  milieu_residence: number
-  quintile_richesse: number
-  travail: number
+  instruction: number
+  nb_enfants: number
+  nb_enfants_deces: number
+  contracep_trad: number
+  contracep_moderne: number
+  mariee: number
+  union_libre: number
+  veuve: number
+  divorcee: number
+  separee: number
+  residence_rural: number
+  quintile: number
+  emploi: number
   region_nord: number
-  religion_musulman: number
+  rel_protestant: number
+  rel_autres_chret: number
+  rel_musulman: number
+  rel_autres: number
   desire_enfant: boolean | null
   probability: number | null
   model_used: string | null

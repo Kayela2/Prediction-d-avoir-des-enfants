@@ -23,33 +23,42 @@ class Simulation(Base):
     title: Mapped[str] = mapped_column(String(200), nullable=False)
     status: Mapped[str] = mapped_column(String(20), default="completed")
 
-    # ── Données saisies par l'utilisateur ─────────────────────────────────────
-    # Correspondent exactement aux variables du modèle EDSC-V
+    # ── Données saisies — encodage corrigé EDSC-V ─────────────────────────────
     age: Mapped[int] = mapped_column(Integer, nullable=False)
-    niveau_instruction: Mapped[int] = mapped_column(Integer, nullable=False)
+    instruction: Mapped[int] = mapped_column(Integer, nullable=False)
     # 0=Aucun  1=Primaire  2=Secondaire  3=Supérieur
 
-    nb_enfants_vivants: Mapped[int] = mapped_column(Integer, nullable=False)
-    contraceptif: Mapped[int] = mapped_column(Integer, nullable=False)
-    # 0=Non  1=Oui
+    nb_enfants: Mapped[int] = mapped_column(Integer, nullable=False)
+    nb_enfants_deces: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
-    statut_matrimonial: Mapped[int] = mapped_column(Integer, nullable=False)
-    # v501 EDSC : 0=Jamais marié  1=Marié(e)  2=Union libre  3=Veuf/Veuve  4=Divorcé(e)  5=Séparé(e)
+    # Contraceptif : 2 dummies (réf = Aucune méthode)
+    contracep_trad: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    contracep_moderne: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
-    milieu_residence: Mapped[int] = mapped_column(Integer, nullable=False)
-    # 1=Urbain  2=Rural
+    # Statut matrimonial : 5 dummies (réf = Jamais mariée)
+    mariee: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    union_libre: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    veuve: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    divorcee: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    separee: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
-    quintile_richesse: Mapped[int] = mapped_column(Integer, nullable=False)
-    # 1=Le plus pauvre … 5=Le plus riche
+    residence_rural: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    # 0=Urbaine (réf)  1=Rurale
 
-    travail: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    quintile: Mapped[int] = mapped_column(Integer, nullable=False)
+    # 1=Très pauvre … 5=Riche
+
+    emploi: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     # 0=Non  1=Oui (v714)
 
     region_nord: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    # 1=Région septentrionale (Adamaoua/Extrême-Nord/Nord)  0=Autre
+    # 1=Adamaoua / Extrême-Nord / Nord
 
-    religion_musulman: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    # 1=Musulmane  0=Non musulmane
+    # Religion : 4 dummies (réf = Catholique)
+    rel_protestant: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    rel_autres_chret: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    rel_musulman: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    rel_autres: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     # ── Résultat de la prédiction ─────────────────────────────────────────────
     desire_enfant: Mapped[bool | None] = mapped_column(Boolean, nullable=True)

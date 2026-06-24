@@ -6,15 +6,31 @@ from pydantic import BaseModel, field_validator
 class SimulationCreate(BaseModel):
     title: str
     age: int
-    niveau_instruction: int   # 0=Aucun 1=Primaire 2=Secondaire 3=Supérieur
-    nb_enfants_vivants: int
-    contraceptif: int         # 0=Non 1=Oui
-    statut_matrimonial: int   # v501 EDSC : 0=Célibataire 1=Marié 2=Union libre 3=Veuf 4=Divorcé 5=Séparé
-    milieu_residence: int     # 1=Urbain 2=Rural
-    quintile_richesse: int    # 1-5
-    travail: int = 0          # 0=Non 1=Oui
-    region_nord: int = 0      # 1=Septentrional 0=Autre
-    religion_musulman: int = 0  # 1=Musulmane 0=Autre
+    instruction: int          # 0=Aucun  1=Primaire  2=Secondaire  3=Supérieur
+    nb_enfants: int
+    nb_enfants_deces: int = 0
+
+    # Contraceptif : 2 dummies (réf = Aucune méthode)
+    contracep_trad: int = 0
+    contracep_moderne: int = 0
+
+    # Statut matrimonial : 5 dummies (réf = Jamais mariée)
+    mariee: int = 0
+    union_libre: int = 0
+    veuve: int = 0
+    divorcee: int = 0
+    separee: int = 0
+
+    residence_rural: int = 0  # 0=Urbaine  1=Rurale
+    quintile: int = 3         # 1-5
+    emploi: int = 0           # 0=Non  1=Oui
+    region_nord: int = 0      # 1=Septentrional
+
+    # Religion : 4 dummies (réf = Catholique)
+    rel_protestant: int = 0
+    rel_autres_chret: int = 0
+    rel_musulman: int = 0
+    rel_autres: int = 0
 
     @field_validator("age")
     @classmethod
@@ -23,32 +39,18 @@ class SimulationCreate(BaseModel):
             raise ValueError("L'âge doit être entre 15 et 49 ans")
         return v
 
-    @field_validator("niveau_instruction")
+    @field_validator("instruction")
     @classmethod
-    def niveau_range(cls, v: int) -> int:
+    def instruction_range(cls, v: int) -> int:
         if v not in (0, 1, 2, 3):
-            raise ValueError("niveau_instruction doit être 0, 1, 2 ou 3")
+            raise ValueError("instruction doit être 0, 1, 2 ou 3")
         return v
 
-    @field_validator("contraceptif")
-    @classmethod
-    def contraceptif_range(cls, v: int) -> int:
-        if v not in (0, 1):
-            raise ValueError("contraceptif doit être 0 ou 1")
-        return v
-
-    @field_validator("milieu_residence")
-    @classmethod
-    def residence_range(cls, v: int) -> int:
-        if v not in (1, 2):
-            raise ValueError("milieu_residence doit être 1 (Urbain) ou 2 (Rural)")
-        return v
-
-    @field_validator("quintile_richesse")
+    @field_validator("quintile")
     @classmethod
     def quintile_range(cls, v: int) -> int:
         if not (1 <= v <= 5):
-            raise ValueError("quintile_richesse doit être entre 1 et 5")
+            raise ValueError("quintile doit être entre 1 et 5")
         return v
 
 
@@ -58,15 +60,24 @@ class SimulationOut(BaseModel):
     title: str
     status: str
     age: int
-    niveau_instruction: int
-    nb_enfants_vivants: int
-    contraceptif: int
-    statut_matrimonial: int
-    milieu_residence: int
-    quintile_richesse: int
-    travail: int
+    instruction: int
+    nb_enfants: int
+    nb_enfants_deces: int
+    contracep_trad: int
+    contracep_moderne: int
+    mariee: int
+    union_libre: int
+    veuve: int
+    divorcee: int
+    separee: int
+    residence_rural: int
+    quintile: int
+    emploi: int
     region_nord: int
-    religion_musulman: int
+    rel_protestant: int
+    rel_autres_chret: int
+    rel_musulman: int
+    rel_autres: int
     desire_enfant: bool | None
     probability: float | None
     confidence: int | None

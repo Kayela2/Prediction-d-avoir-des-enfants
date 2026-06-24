@@ -1,6 +1,7 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { Home, BarChart2, Clock, Bell, Settings, User, Plus, LogOut, Heart } from 'lucide-react'
 import { useStore } from '../../store/useStore'
+import Button from '../ui/Button'
 
 const sidebarNav = [
   { to:'/dashboard',            label:'Accueil',    icon:Home,     end:true },
@@ -60,11 +61,10 @@ export default function DashboardLayout() {
           ))}
         </nav>
 
-        <button onClick={() => nav('/simulation')}
-          style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, padding:'13px', marginBottom:14, background:'linear-gradient(135deg,#6366F1,#8B5CF6)', color:'white', border:'none', borderRadius:12, fontWeight:700, fontSize:14, cursor:'pointer', fontFamily:'inherit', boxShadow:'0 4px 20px rgba(99,102,241,0.4)', transition:'opacity 0.15s' }}
-          onMouseOver={e => (e.currentTarget.style.opacity='0.88')} onMouseOut={e => (e.currentTarget.style.opacity='1')}>
-          <Plus size={16} /> Nouvelle simulation
-        </button>
+        <Button onClick={() => nav('/simulation')} fullWidth size="md" leftIcon={<Plus size={16} />}
+          style={{ marginBottom:14 }}>
+          Nouvelle simulation
+        </Button>
 
         {user && (
           <div style={{ borderRadius:12, background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.07)', overflow:'hidden' }}>

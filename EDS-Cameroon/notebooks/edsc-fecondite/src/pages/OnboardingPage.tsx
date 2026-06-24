@@ -1,13 +1,14 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Home, TrendingUp, Clock, Settings, Check,
   Info, ChevronLeft, ChevronRight, Heart, Lightbulb, Sparkles, Scale, ChevronDown
 } from 'lucide-react'
-import { useStore, INSTRUCTION_MAP, MILIEU_MAP } from '../store/useStore'
+import { useStore, INSTRUCTION_MAP } from '../store/useStore'
 import { api } from '../lib/api'
-import type { Instruction, Milieu, Quintile } from '../types'
+import Button from '../components/ui/Button'
+import type { Instruction, Milieu, Quintile, ContraceptifType } from '../types'
 
 // ── Design tokens (Figma) ─────────────────────────────────────────────────────
 const P    = '#3B3ADB'   // cobalt primary
@@ -70,35 +71,44 @@ const RELIGIONS: { v:number; label:string; musulman:boolean }[] = [
   { v:6, label:'Autre / Sans religion', musulman:false },
 ]
 
+// Clé de sauvegarde des données saisies avant authentification
+const PENDING_KEY = 'hearth_pending_sim'
+
 const slideV = {
   enter: (d:number) => ({ opacity:0, x:d>0?40:-40 }),
   center: { opacity:1, x:0, transition:{ duration:0.35, ease:'easeOut' } },
   exit:   (d:number) => ({ opacity:0, x:d>0?-40:40, transition:{ duration:0.25 } }),
 } satisfies import('framer-motion').Variants
 
+// Récupère les données saisies avant authentification (brouillon persistant)
+function loadPending(): Record<string, unknown> | null {
+  try { return JSON.parse(localStorage.getItem(PENDING_KEY) || 'null') } catch { return null }
+}
+
 // ── Main component ─────────────────────────────────────────────────────────────
 export default function OnboardingPage() {
   const nav = useNavigate()
   const { user, setSimData, setPredictionResult, createSimulation } = useStore()
 
+  // Initialisation paresseuse : restaure le brouillon éventuel pour l'affichage
+  const p0 = loadPending()
   const [step,              setStep]              = useState(0)
   const [dir,               setDir]               = useState(1)
-  const [age,               setAge]               = useState(28)
-  const [nbEnfants,         setNbEnfants]         = useState(0)
-  const [instruction,       setInstruction]       = useState<Instruction|null>(null)
-  const [milieu,            setMilieu]            = useState<Milieu|null>(null)
-  const [quintile,          setQuintile]          = useState<Quintile|null>(null)
-  const [statutMatrimonial, setStatutMatrimonial] = useState<number>(1) // v501 EDSC : 1=Marié(e)
-  const [contraceptif,      setContraceptif]      = useState<number>(0)
-  const [travail,           setTravail]           = useState<number>(0)
-  const [regionCode,        setRegionCode]        = useState<number>(0)
-  const [religionCode,      setReligionCode]      = useState<number>(0)
+  const [age,               setAge]               = useState<number>((p0?.age as number) ?? 28)
+  const [nbEnfants,         setNbEnfants]         = useState<number>((p0?.nbEnfants as number) ?? 0)
+  const [instruction,       setInstruction]       = useState<Instruction|null>((p0?.instruction as Instruction) ?? null)
+  const [milieu,            setMilieu]            = useState<Milieu|null>((p0?.milieu as Milieu) ?? null)
+  const [quintile,          setQuintile]          = useState<Quintile|null>((p0?.quintile as Quintile) ?? null)
+  const [statutMatrimonial, setStatutMatrimonial] = useState<number>((p0?.statutMatrimonial as number) ?? 0) // 0=Jamais mariée (réf)
+  const [contraceptifType,  setContraceptifType]  = useState<ContraceptifType>((p0?.contraceptifType as ContraceptifType) ?? 0) // 0=Aucun 1=Trad 2=Moderne
+  const [emploi,            setEmploi]            = useState<number>((p0?.emploi as number) ?? 0)
+  const [regionCode,        setRegionCode]        = useState<number>((p0?.regionCode as number) ?? 0)
+  const [religionCode,      setReligionCode]      = useState<number>((p0?.religionCode as number) ?? 0)
   const [analyzing,         setAnalyzing]         = useState(false)
-
-  // Dérivé : conversion dropdown → binaire pour le modèle ML
-  const regionNord       = REGIONS.find(r => r.v === regionCode)?.nord    ? 1 : 0
-  const religionMusulman = RELIGIONS.find(r => r.v === religionCode)?.musulman ? 1 : 0
   const [simError,          setSimError]          = useState<string|null>(null)
+
+  // Dérivé utilisé dans l'aperçu de l'étape 4 (les dummies du modèle sont calculés dans runPrediction)
+  const regionNord = REGIONS.find(r => r.v === regionCode)?.nord ? 1 : 0
 
   function canNext() {
     if (step===2) return instruction!==null
@@ -107,54 +117,55 @@ export default function OnboardingPage() {
     return true
   }
 
-  async function goNext() {
-    if (!canNext()) return
-    if (step < 4) { setDir(1); setStep(s=>s+1); return }
-
-    // Vérifier que l'utilisateur est connecté avant de soumettre
-    if (!user) {
-      nav('/login')
-      return
+  // Lance la prédiction à partir d'un jeu de données complet (saisi ou restauré)
+  const runPrediction = useCallback(async (d: {
+    age:number; nbEnfants:number; instruction:Instruction; milieu:Milieu; quintile:Quintile
+    statutMatrimonial:number; contraceptifType:ContraceptifType; emploi:number
+    regionCode:number; religionCode:number
+  }) => {
+    const regionNord = REGIONS.find(r => r.v === d.regionCode)?.nord ? 1 : 0
+    const predPayload = {
+      age:               d.age,
+      instruction:       INSTRUCTION_MAP[d.instruction],
+      nb_enfants:        d.nbEnfants,
+      nb_enfants_deces:  0,
+      contracep_trad:    d.contraceptifType === 1 ? 1 : 0,
+      contracep_moderne: d.contraceptifType === 2 ? 1 : 0,
+      mariee:            d.statutMatrimonial === 1 ? 1 : 0,
+      union_libre:       d.statutMatrimonial === 2 ? 1 : 0,
+      veuve:             d.statutMatrimonial === 3 ? 1 : 0,
+      divorcee:          d.statutMatrimonial === 4 ? 1 : 0,
+      separee:           d.statutMatrimonial === 5 ? 1 : 0,
+      residence_rural:   d.milieu === 'rural' ? 1 : 0,
+      quintile:          d.quintile,
+      emploi:            d.emploi,
+      region_nord:       regionNord,
+      rel_protestant:    d.religionCode === 2 ? 1 : 0,
+      rel_autres_chret:  d.religionCode === 3 ? 1 : 0,
+      rel_musulman:      d.religionCode === 4 ? 1 : 0,
+      rel_autres:        (d.religionCode === 5 || d.religionCode === 6) ? 1 : 0,
     }
 
-    // Étape finale : appel réel à l'API
-    const simData = { age, nbEnfants, instruction:instruction!, milieu:milieu!, quintile:quintile!, statutMatrimonial, contraceptif, travail, regionNord, religionMusulman }
-    setSimData(simData)
+    setSimData({
+      age: d.age, nbEnfants: d.nbEnfants, instruction: d.instruction, milieu: d.milieu,
+      quintile: d.quintile, statutMatrimonial: d.statutMatrimonial,
+      contraceptifType: d.contraceptifType, emploi: d.emploi, regionNord, religionCode: d.religionCode,
+    })
     setAnalyzing(true)
     setSimError(null)
 
     try {
-      const predPayload = {
-        age,
-        niveau_instruction: INSTRUCTION_MAP[instruction!],
-        nb_enfants_vivants: nbEnfants,
-        contraceptif,
-        statut_matrimonial: statutMatrimonial,
-        milieu_residence:   MILIEU_MAP[milieu!],
-        quintile_richesse:  quintile!,
-        travail,
-        region_nord:        regionNord,
-        religion_musulman:  religionMusulman,
-      }
-
-      // Créer la simulation ET récupérer les insights complets en parallèle
       const [sim, predRes] = await Promise.all([
         createSimulation({
-          title: `Simulation — ${milieu === 'urbain' ? 'Milieu Urbain' : 'Milieu Rural'}`,
+          title: `Simulation — ${d.milieu === 'urbain' ? 'Milieu Urbain' : 'Milieu Rural'}`,
           ...predPayload,
         }),
         api.post('/prediction', predPayload),
       ])
 
       const pred = predRes.data
-
-      // Stocker le résultat complet (avec insights et importances réels)
       setPredictionResult({
-        age,
-        instruction:        instruction!,
-        milieu:             milieu!,
-        nbEnfants,
-        quintile:           quintile!,
+        age: d.age, instruction: d.instruction, milieu: d.milieu, nbEnfants: d.nbEnfants, quintile: d.quintile,
         confidence:         pred.confidence ?? sim.confidence ?? 0,
         desireEnfant:       pred.desire_enfant ?? sim.desire_enfant ?? false,
         probability:        pred.probability ?? sim.probability ?? 0,
@@ -162,12 +173,47 @@ export default function OnboardingPage() {
         featureImportances: pred.feature_importances ?? {},
       })
 
+      localStorage.removeItem(PENDING_KEY)  // données traitées → on nettoie
       setAnalyzing(false)
       nav(`/dashboard/resultats/${sim.id}`)
     } catch {
       setAnalyzing(false)
       setSimError('Erreur lors de la simulation. Vérifiez que le serveur est démarré.')
     }
+  }, [nav, setSimData, setPredictionResult, createSimulation])
+
+  // Après authentification : relance automatique de la prédiction à partir du
+  // brouillon (les champs sont déjà restaurés via l'initialisation paresseuse).
+  // setTimeout(0) évite un setState synchrone dans l'effet (renders en cascade).
+  useEffect(() => {
+    if (!user) return
+    const raw = localStorage.getItem(PENDING_KEY)
+    if (!raw) return
+    const t = setTimeout(() => {
+      try { runPrediction(JSON.parse(raw)) }
+      catch { localStorage.removeItem(PENDING_KEY) }
+    }, 0)
+    return () => clearTimeout(t)
+  }, [user, runPrediction])
+
+  async function goNext() {
+    if (!canNext()) return
+    if (step < 4) { setDir(1); setStep(s=>s+1); return }
+
+    const simData = {
+      age, nbEnfants, instruction: instruction!, milieu: milieu!, quintile: quintile!,
+      statutMatrimonial, contraceptifType, emploi, regionCode, religionCode,
+    }
+
+    // Non authentifié : on sauvegarde les saisies et on redirige vers l'inscription
+    if (!user) {
+      localStorage.setItem(PENDING_KEY, JSON.stringify(simData))
+      nav('/login')
+      return
+    }
+
+    // Authentifié : lancer la prédiction immédiatement
+    runPrediction(simData)
   }
 
   function goBack() {
@@ -285,7 +331,7 @@ export default function OnboardingPage() {
                 </div>
 
                 {/* Right form area */}
-                <div className="mob-step-area" style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', padding:'32px 40px', overflowY:'auto' }}>
+                <div className="mob-step-area" style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'flex-start', padding:'32px 40px', overflowY:'auto' }}>
                   <div style={{ width:'100%', maxWidth:460 }}>
                     <span style={{ display:'inline-block', fontSize:11, fontWeight:700, color:P, background:PLT, padding:'5px 14px', borderRadius:999, marginBottom:20, letterSpacing:'0.05em' }}>
                       Étape initiale
@@ -336,7 +382,7 @@ export default function OnboardingPage() {
 
             {/* ── STEP 2: CHILDREN ── */}
             {step===1 && (
-              <div className="mob-step-area" style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', padding:'40px 60px', overflowY:'auto', background:BG }}>
+              <div className="mob-step-area" style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'flex-start', padding:'40px 60px', overflowY:'auto', background:BG }}>
                 <div style={{ width:'100%', maxWidth:560 }}>
                   <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:20 }}>
                     <span style={{ fontSize:11, fontWeight:700, color:P, background:PLT, padding:'4px 12px', borderRadius:999, letterSpacing:'0.06em' }}>ÉTAPE 02 SUR 05</span>
@@ -373,7 +419,7 @@ export default function OnboardingPage() {
                     <p style={{ fontSize:13, fontWeight:700, color:NAVY, marginBottom:12 }}>Statut matrimonial</p>
                     <div className="stat-mat-grid" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
                       {[
-                        { v:0, label:'Célibataire' },
+                        { v:0, label:'Jamais mariée' },
                         { v:1, label:'Marié(e)' },
                         { v:2, label:'Union libre' },
                         { v:3, label:'Veuf / Veuve' },
@@ -388,27 +434,33 @@ export default function OnboardingPage() {
                     </div>
                   </div>
 
-                  {/* Utilisation contraceptif */}
-                  <div style={{ background:'white', borderRadius:16, padding:'16px 20px', border:`1.5px solid ${BORD}`, marginBottom:10, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                    <div>
-                      <p style={{ fontSize:13, fontWeight:700, color:NAVY, margin:0 }}>Utilisation d'un contraceptif</p>
-                      <p style={{ fontSize:11, color:MUTED, margin:'3px 0 0' }}>Méthode moderne ou traditionnelle</p>
+                  {/* Contraceptif : 3 options (Aucun / Traditionnel / Moderne) */}
+                  <div style={{ background:'white', borderRadius:16, padding:'16px 20px', border:`1.5px solid ${BORD}`, marginBottom:10 }}>
+                    <p style={{ fontSize:13, fontWeight:700, color:NAVY, marginBottom:10 }}>Utilisation d'un contraceptif</p>
+                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:8 }}>
+                      {([
+                        { v:0 as ContraceptifType, label:'Aucun',         sub:'Pas de méthode'     },
+                        { v:1 as ContraceptifType, label:'Traditionnel',  sub:'Folklorique / tisane' },
+                        { v:2 as ContraceptifType, label:'Moderne',       sub:'Pilule / préservatif' },
+                      ] as { v: ContraceptifType; label: string; sub: string }[]).map(({ v, label, sub }) => (
+                        <button key={v} onClick={() => setContraceptifType(v)} type="button"
+                          style={{ padding:'10px 8px', borderRadius:10, border:`1.5px solid ${contraceptifType===v?P:BORD}`, background:contraceptifType===v?PLT:'white', color:contraceptifType===v?P:MUTED, fontSize:11, fontWeight:contraceptifType===v?700:400, cursor:'pointer', fontFamily:'inherit', transition:'all 0.15s', textAlign:'center' }}>
+                          <div style={{ fontWeight:700, marginBottom:3 }}>{label}</div>
+                          <div style={{ fontSize:10, opacity:0.75 }}>{sub}</div>
+                        </button>
+                      ))}
                     </div>
-                    <button onClick={()=>setContraceptif(c=>c===0?1:0)} type="button"
-                      style={{ width:48, height:26, borderRadius:999, border:'none', background:contraceptif===1?P:BORD, cursor:'pointer', position:'relative', transition:'background 0.2s', flexShrink:0 }}>
-                      <div style={{ position:'absolute', top:3, left:contraceptif===1?'calc(100% - 23px)':3, width:20, height:20, borderRadius:'50%', background:'white', transition:'left 0.2s', boxShadow:'0 1px 4px rgba(0,0,0,0.2)' }} />
-                    </button>
                   </div>
 
-                  {/* Travail (emploi) */}
+                  {/* Emploi (activité professionnelle) */}
                   <div style={{ background:'white', borderRadius:16, padding:'16px 20px', border:`1.5px solid ${BORD}`, marginBottom:20, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                     <div>
                       <p style={{ fontSize:13, fontWeight:700, color:NAVY, margin:0 }}>Activité professionnelle</p>
                       <p style={{ fontSize:11, color:MUTED, margin:'3px 0 0' }}>Exercez-vous un emploi actuellement ?</p>
                     </div>
-                    <button onClick={()=>setTravail(t=>t===0?1:0)} type="button"
-                      style={{ width:48, height:26, borderRadius:999, border:'none', background:travail===1?P:BORD, cursor:'pointer', position:'relative', transition:'background 0.2s', flexShrink:0 }}>
-                      <div style={{ position:'absolute', top:3, left:travail===1?'calc(100% - 23px)':3, width:20, height:20, borderRadius:'50%', background:'white', transition:'left 0.2s', boxShadow:'0 1px 4px rgba(0,0,0,0.2)' }} />
+                    <button onClick={() => setEmploi(e => e === 0 ? 1 : 0)} type="button"
+                      style={{ width:48, height:26, borderRadius:999, border:'none', background:emploi===1?P:BORD, cursor:'pointer', position:'relative', transition:'background 0.2s', flexShrink:0 }}>
+                      <div style={{ position:'absolute', top:3, left:emploi===1?'calc(100% - 23px)':3, width:20, height:20, borderRadius:'50%', background:'white', transition:'left 0.2s', boxShadow:'0 1px 4px rgba(0,0,0,0.2)' }} />
                     </button>
                   </div>
 
@@ -725,14 +777,25 @@ export default function OnboardingPage() {
 
       {/* ── Mobile header ── */}
       <div className="mob-header" style={{ display:'none', position:'fixed', top:0, left:0, right:0, zIndex:100, background:'white', borderBottom:`1px solid ${BORD}`, padding:'14px 20px', alignItems:'center', gap:12, boxShadow:'0 2px 10px rgba(0,0,0,0.05)' }}>
-        <button onClick={goBack} style={{ width:36, height:36, borderRadius:'50%', border:`1.5px solid ${BORD}`, background:'white', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', flexShrink:0 }}>
+        <button onClick={goBack} aria-label="Étape précédente" style={{ width:36, height:36, borderRadius:'50%', border:`1.5px solid ${BORD}`, background:'white', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', flexShrink:0 }}>
           <ChevronLeft size={18} color={NAVY} />
         </button>
         <div style={{ flex:1, height:5, background:PLT, borderRadius:99, overflow:'hidden' }}>
           <div style={{ height:'100%', width:`${((step+1)/5)*100}%`, background:P, borderRadius:99, transition:'width 0.4s' }} />
         </div>
         <span style={{ fontSize:12, fontWeight:700, color:P, flexShrink:0 }}>{step+1}/5</span>
+        <button onClick={()=>nav('/')} aria-label="Retour à l'accueil" style={{ width:36, height:36, borderRadius:'50%', border:`1.5px solid ${BORD}`, background:'white', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', flexShrink:0 }}>
+          <Home size={17} color={NAVY} />
+        </button>
       </div>
+
+      {/* ── Bouton Accueil flottant (desktop) ── */}
+      <button onClick={()=>nav('/')} aria-label="Retour à l'accueil" className="home-fab"
+        style={{ position:'fixed', top:20, right:20, zIndex:120, display:'flex', alignItems:'center', gap:7, padding:'9px 16px', background:'white', border:`1.5px solid ${BORD}`, borderRadius:999, fontSize:13, fontWeight:600, color:NAVY, cursor:'pointer', fontFamily:'inherit', boxShadow:'0 2px 12px rgba(0,0,0,0.08)', transition:'all 0.15s' }}
+        onMouseOver={e=>{ e.currentTarget.style.borderColor=P; e.currentTarget.style.color=P }}
+        onMouseOut={e=>{ e.currentTarget.style.borderColor=BORD; e.currentTarget.style.color=NAVY }}>
+        <Home size={15} /> Accueil
+      </button>
 
       <style>{`
         @media(max-width:900px) {
@@ -743,6 +806,7 @@ export default function OnboardingPage() {
           .mob-header    { display:flex!important; }
           .mob-step-area { padding-top:72px!important; }
           .edu-mobile-h  { display:block!important; }
+          .home-fab      { display:none!important; }
         }
         @media(max-width:640px) {
           .res-grid      { grid-template-columns:1fr!important; }
@@ -805,33 +869,14 @@ function NavBtns({ onBack, onNext, canNext, nextLabel }: {
 }) {
   return (
     <div style={{ display:'flex', justifyContent:'center', gap:12, marginTop:32 }}>
-      <button onClick={onBack}
-        style={{
-          display:'flex', alignItems:'center', justifyContent:'center', gap:6,
-          padding:'0 28px', height:52, minWidth:160, flexShrink:0,
-          background:'white', border:`1.5px solid ${BORD}`, borderRadius:999,
-          fontSize:14, fontWeight:600, cursor:'pointer', fontFamily:'inherit',
-          color:NAVY, transition:'all 0.2s',
-        }}
-        onMouseOver={e=>{e.currentTarget.style.borderColor=P; e.currentTarget.style.color=P; e.currentTarget.style.background=PLT}}
-        onMouseOut={e=>{e.currentTarget.style.borderColor=BORD; e.currentTarget.style.color=NAVY; e.currentTarget.style.background='white'}}>
-        <ChevronLeft size={16}/> Précédent
-      </button>
-      <button onClick={onNext} disabled={!canNext}
-        style={{
-          display:'flex', alignItems:'center', justifyContent:'center', gap:8,
-          padding:'0 36px', height:52, minWidth:220,
-          background: canNext ? `linear-gradient(135deg,${P} 0%,#6B5FEF 100%)` : '#D8D8F0',
-          border:'none', borderRadius:999, fontSize:14, fontWeight:700,
-          cursor: canNext ? 'pointer' : 'not-allowed',
-          fontFamily:'inherit', color: canNext ? 'white' : '#A0A0C0',
-          boxShadow: canNext ? `0 8px 24px ${P}40` : 'none',
-          transition:'all 0.2s', transform:'translateY(0)',
-        }}
-        onMouseOver={e=>{ if(canNext){ (e.currentTarget as HTMLElement).style.transform='translateY(-1px)'; (e.currentTarget as HTMLElement).style.boxShadow=`0 12px 32px ${P}55` }}}
-        onMouseOut={e=>{ (e.currentTarget as HTMLElement).style.transform='translateY(0)'; (e.currentTarget as HTMLElement).style.boxShadow=canNext?`0 8px 24px ${P}40`:'none' }}>
-        {nextLabel} <ChevronRight size={16}/>
-      </button>
+      <Button variant="secondary" size="lg" onClick={onBack}
+        leftIcon={<ChevronLeft size={16}/>} style={{ minWidth:160 }}>
+        Précédent
+      </Button>
+      <Button variant="primary" size="lg" onClick={onNext} disabled={!canNext}
+        rightIcon={<ChevronRight size={16}/>} style={{ minWidth:220 }}>
+        {nextLabel}
+      </Button>
     </div>
   )
 }

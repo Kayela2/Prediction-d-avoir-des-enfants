@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Bell, Search, Save, Share2, Sparkles, Lightbulb, MoreVertical, GraduationCap, MapPin, Coins, Check, CheckCircle2, XCircle } from 'lucide-react'
+import { Bell, Search, Save, Share2, Sparkles, Lightbulb, MoreVertical, GraduationCap, MapPin, Coins, Check, CheckCircle2, XCircle, Home } from 'lucide-react'
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { useStore } from '../store/useStore'
+import Button from '../components/ui/Button'
 
 // Reverse maps : codes numériques → labels pour l'affichage depuis l'historique
 const INSTRUCTION_REVERSE: Record<number, import('../types').Instruction> = { 0:'aucun', 1:'primaire', 2:'secondaire', 3:'superieur' }
-const MILIEU_REVERSE: Record<number, import('../types').Milieu>           = { 1:'urbain', 2:'rural' }
+// residence_rural : 0=urbain 1=rural (encodage corrigé EDSC-V)
+const MILIEU_REVERSE: Record<number, import('../types').Milieu>           = { 0:'urbain', 1:'rural' }
 
 // ── Design tokens (same as OnboardingPage / Figma) ────────────────────────────
 const P     = '#3B3ADB'
@@ -107,11 +109,11 @@ export default function ResultsPage() {
     confidence:         simFromHistory.confidence ?? 0,
     desireEnfant:       simFromHistory.desire_enfant ?? false,
     probability:        simFromHistory.probability ?? 0,
-    instruction:        INSTRUCTION_REVERSE[simFromHistory.niveau_instruction] ?? 'primaire',
-    milieu:             MILIEU_REVERSE[simFromHistory.milieu_residence] ?? 'urbain',
-    nbEnfants:          simFromHistory.nb_enfants_vivants,
+    instruction:        INSTRUCTION_REVERSE[simFromHistory.instruction] ?? 'primaire',
+    milieu:             MILIEU_REVERSE[simFromHistory.residence_rural] ?? 'urbain',
+    nbEnfants:          simFromHistory.nb_enfants,
     age:                simFromHistory.age,
-    quintile:           simFromHistory.quintile_richesse,
+    quintile:           simFromHistory.quintile,
     insights:           [] as string[],
     featureImportances: {} as Record<string, number>,
   } : {
@@ -161,9 +163,12 @@ export default function ResultsPage() {
 
       {/* ── Top bar ── */}
       <div className="no-print" style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'16px 28px', background:'transparent' }}>
-        <div style={{ width:36, height:36, background:'white', borderRadius:10, display:'flex', alignItems:'center', justifyContent:'center', border:`1px solid ${BORD}` }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={P} strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-        </div>
+        <button onClick={()=>nav('/')} aria-label="Retour à l'accueil"
+          style={{ display:'flex', alignItems:'center', gap:7, height:36, padding:'0 14px', background:'white', borderRadius:999, border:`1px solid ${BORD}`, cursor:'pointer', fontFamily:'inherit', fontSize:13, fontWeight:600, color:NAVY, transition:'all 0.15s' }}
+          onMouseOver={e=>{ e.currentTarget.style.borderColor=P; e.currentTarget.style.color=P }}
+          onMouseOut={e=>{ e.currentTarget.style.borderColor=BORD; e.currentTarget.style.color=NAVY }}>
+          <Home size={15} color="currentColor" /> Accueil
+        </button>
         <div style={{ display:'flex', alignItems:'center', gap:12 }}>
           <button style={{ width:36, height:36, borderRadius:10, background:'white', border:`1px solid ${BORD}`, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
             <Bell size={16} color={MUTED}/>
@@ -200,14 +205,14 @@ export default function ResultsPage() {
               Le modèle a analysé votre profil et l'a comparé à 13 527 femmes camerounaises de 15 à 49 ans issues de l'EDSC-V 2018. Voici ce que les données révèlent sur votre situation.
             </p>
             <div className="no-print" style={{ display:'flex', alignItems:'center', gap:14, flexWrap:'wrap' }}>
-              <button onClick={handleSavePDF}
-                style={{ display:'flex', alignItems:'center', gap:8, padding:'12px 24px', background:P, color:'white', border:'none', borderRadius:999, fontSize:14, fontWeight:700, cursor:'pointer', fontFamily:'inherit', boxShadow:`0 4px 16px ${P}44` }}>
-                <Save size={15}/> Sauvegarder en PDF
-              </button>
-              <button onClick={handleShare}
-                style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 20px', background:copied?'#ECFDF5':'white', border:`1.5px solid ${copied?'#86EFAC':BORD}`, borderRadius:999, fontSize:14, fontWeight:600, color:copied?'#15803D':P, cursor:'pointer', fontFamily:'inherit', transition:'all 0.3s' }}>
-                {copied ? <><Check size={15}/> Lien copié !</> : <><Share2 size={15}/> Partager l'analyse</>}
-              </button>
+              <Button variant="primary" size="md" onClick={handleSavePDF} leftIcon={<Save size={15}/>}>
+                Sauvegarder en PDF
+              </Button>
+              <Button variant="secondary" size="md" onClick={handleShare}
+                leftIcon={copied ? <Check size={15}/> : <Share2 size={15}/>}
+                style={ copied ? { background:'#ECFDF5', borderColor:'#86EFAC', color:'#15803D' } : undefined }>
+                {copied ? 'Lien copié !' : 'Partager l\'analyse'}
+              </Button>
             </div>
           </div>
         </motion.div>

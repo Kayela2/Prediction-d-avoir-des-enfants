@@ -2,52 +2,68 @@ import { create } from 'zustand'
 import { api } from '../lib/api'
 import type { User, Simulation, SimulationData, PredictionResult } from '../types'
 
-// Mappings label → code numérique pour le backend
+// Mapping label → code numérique (instruction reste inchangé)
 export const INSTRUCTION_MAP: Record<string, number> = {
   aucun: 0, primaire: 1, secondaire: 2, superieur: 3,
 }
-export const MILIEU_MAP: Record<string, number> = {
-  urbain: 1, rural: 2,
-}
+
 const ICONS = ['🏙️', '🌿', '📚', '🏡', '💫', '🌟', '🔬', '🌍']
 
 interface SimPayload {
   title: string
   age: number
-  niveau_instruction: number
-  nb_enfants_vivants: number
-  contraceptif: number
-  statut_matrimonial: number
-  milieu_residence: number
-  quintile_richesse: number
-  travail: number
+  instruction: number
+  nb_enfants: number
+  nb_enfants_deces: number
+  contracep_trad: number
+  contracep_moderne: number
+  mariee: number
+  union_libre: number
+  veuve: number
+  divorcee: number
+  separee: number
+  residence_rural: number
+  quintile: number
+  emploi: number
   region_nord: number
-  religion_musulman: number
+  rel_protestant: number
+  rel_autres_chret: number
+  rel_musulman: number
+  rel_autres: number
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapSimulation(s: any): Simulation {
   return {
-    id:                s.id,
-    user_id:           s.user_id,
-    title:             s.title,
-    createdAt:         s.created_at,
-    status:            s.status ?? 'completed',
-    confidence:        s.confidence,
-    icon:              ICONS[Math.abs(s.id.charCodeAt(0)) % ICONS.length],
-    age:               s.age,
-    niveau_instruction:s.niveau_instruction,
-    nb_enfants_vivants:s.nb_enfants_vivants,
-    contraceptif:      s.contraceptif,
-    statut_matrimonial:s.statut_matrimonial,
-    milieu_residence:  s.milieu_residence,
-    quintile_richesse: s.quintile_richesse,
-    travail:           s.travail ?? 0,
-    region_nord:       s.region_nord ?? 0,
-    religion_musulman: s.religion_musulman ?? 0,
-    desire_enfant:     s.desire_enfant,
-    probability:       s.probability,
-    model_used:        s.model_used,
+    id:               s.id,
+    user_id:          s.user_id,
+    title:            s.title,
+    createdAt:        s.created_at,
+    status:           s.status ?? 'completed',
+    confidence:       s.confidence,
+    icon:             ICONS[Math.abs(s.id.charCodeAt(0)) % ICONS.length],
+    age:              s.age,
+    instruction:      s.instruction,
+    nb_enfants:       s.nb_enfants,
+    nb_enfants_deces: s.nb_enfants_deces ?? 0,
+    contracep_trad:   s.contracep_trad ?? 0,
+    contracep_moderne:s.contracep_moderne ?? 0,
+    mariee:           s.mariee ?? 0,
+    union_libre:      s.union_libre ?? 0,
+    veuve:            s.veuve ?? 0,
+    divorcee:         s.divorcee ?? 0,
+    separee:          s.separee ?? 0,
+    residence_rural:  s.residence_rural ?? 0,
+    quintile:         s.quintile,
+    emploi:           s.emploi ?? 0,
+    region_nord:      s.region_nord ?? 0,
+    rel_protestant:   s.rel_protestant ?? 0,
+    rel_autres_chret: s.rel_autres_chret ?? 0,
+    rel_musulman:     s.rel_musulman ?? 0,
+    rel_autres:       s.rel_autres ?? 0,
+    desire_enfant:    s.desire_enfant,
+    probability:      s.probability,
+    model_used:       s.model_used,
   }
 }
 
@@ -113,7 +129,6 @@ export const useStore = create<AppState>((set, get) => ({
     set({ authLoading: true, authError: null })
     try {
       await api.post('/auth/register', { name, email, password, sexe: sexe ?? null })
-      // Connexion automatique après inscription
       const { data } = await api.post('/auth/login', { email, password })
       localStorage.setItem('token', data.access_token)
       await get().fetchUser()

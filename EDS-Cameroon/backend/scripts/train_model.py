@@ -1,5 +1,7 @@
 """
 Entraînement du modèle EDSC Cameroun 2018
+  - Encodage corrigé : 2 dummies contraceptif, 5 dummies statut matrimonial,
+    résidence rural 0/1, 4 dummies religion, nb_enfants_deces
   - SMOTE sur le train uniquement (correction déséquilibre 94/6%)
   - 4 modèles comparés : RL, RF, Arbre de décision, SVM
   - Sélection : meilleur AUC CV-5 parmi les modèles sans overfitting sévère (gap ≤ 0.15)
@@ -28,24 +30,33 @@ from imblearn.over_sampling  import SMOTE
 DATA_PATH  = Path(__file__).parent.parent.parent / "data" / "CMIR71FL.SAV"
 MODEL_PATH = Path(__file__).parent.parent / "app" / "ml" / "model.joblib"
 
+# Catégories de référence (absentes des dummies) :
+#   contraceptif  → Aucune méthode  (contracep_trad=0, contracep_moderne=0)
+#   statut_mat    → Jamais mariée   (toutes dummies=0)
+#   résidence     → Urbaine         (residence_rural=0)
+#   religion      → Catholique      (toutes dummies rel_*=0)
 FEATURES = [
-    "age", "niveau_instruction", "nb_enfants_vivants", "contraceptif",
-    "statut_matrimonial", "milieu_residence", "quintile_richesse",
-    "travail", "region_nord", "religion_musulman",
+    "age", "instruction", "nb_enfants", "nb_enfants_deces",
+    "contracep_trad", "contracep_moderne",
+    "mariee", "union_libre", "veuve", "divorcee", "separee",
+    "residence_rural", "quintile", "emploi", "region_nord",
+    "rel_protestant", "rel_autres_chret", "rel_musulman", "rel_autres",
 ]
 
 VARIABLES_DHS = {
     "v012": "age",
-    "v106": "niveau_instruction",
-    "v218": "nb_enfants_vivants",
-    "v313": "utilisation_contraceptif",
-    "v501": "statut_matrimonial",
-    "v025": "milieu_residence",
-    "v190": "quintile_richesse",
+    "v106": "instruction_raw",
+    "v218": "nb_enfants",
+    "v206": "enfants_deces_garcons",
+    "v207": "enfants_deces_filles",
+    "v313": "contraceptif_raw",
+    "v501": "statut_raw",
+    "v025": "milieu_raw",
+    "v190": "quintile",
     "v602": "desir_enfant",
-    "v714": "travail_raw",
+    "v714": "emploi_raw",
     "v024": "region",
-    "v130": "religion",
+    "v130": "religion_raw",
 }
 
 
@@ -57,15 +68,46 @@ def load_and_prepare():
     cols_ok = [c for c in VARIABLES_DHS if c in df.columns]
     df = df[cols_ok].rename(columns=VARIABLES_DHS)
 
-    df["desir_bin"]        = df["desir_enfant"].apply(
+    # ── Variable cible ────────────────────────────────────────────────────────
+    df["desir_bin"] = df["desir_enfant"].apply(
         lambda x: 1 if x in [1,2,3] else (0 if x in [4,5,6,7,8] else np.nan)
     )
     df = df[df["desir_bin"].notna()].copy()
 
-    df["contraceptif"]     = (df["utilisation_contraceptif"] > 0).astype(int)
-    df["travail"]          = df["travail_raw"].fillna(0).astype(int).clip(0, 1)
-    df["region_nord"]      = df["region"].isin([1, 4, 6]).astype(int)
-    df["religion_musulman"]= (df["religion"] == 4).astype(int)
+    # ── Instruction (v106, 0-3 ordinal) ──────────────────────────────────────
+    df["instruction"] = df["instruction_raw"].astype(float)
+
+    # ── Enfants décédés (v206 + v207) ────────────────────────────────────────
+    garcons = df["enfants_deces_garcons"].fillna(0) if "enfants_deces_garcons" in df.columns else 0
+    filles  = df["enfants_deces_filles"].fillna(0)  if "enfants_deces_filles"  in df.columns else 0
+    df["nb_enfants_deces"] = (garcons + filles).astype(float)
+
+    # ── Contraceptif : 2 dummies (réf = Aucune méthode, v313=0) ─────────────
+    # v313 : 0=Aucune  1=Folklorique  2=Traditionnelle  3=Moderne
+    df["contracep_trad"]    = df["contraceptif_raw"].isin([1, 2]).astype(int)
+    df["contracep_moderne"] = (df["contraceptif_raw"] == 3).astype(int)
+
+    # ── Statut matrimonial : 5 dummies (réf = Jamais mariée, v501=0) ─────────
+    df["mariee"]      = (df["statut_raw"] == 1).astype(int)
+    df["union_libre"] = (df["statut_raw"] == 2).astype(int)
+    df["veuve"]       = (df["statut_raw"] == 3).astype(int)
+    df["divorcee"]    = (df["statut_raw"] == 4).astype(int)
+    df["separee"]     = (df["statut_raw"] == 5).astype(int)
+
+    # ── Résidence (v025 : 1=Urbain 2=Rural → rural=1, urbain=0) ─────────────
+    df["residence_rural"] = (df["milieu_raw"] == 2).astype(int)
+
+    # ── Emploi (v714) ─────────────────────────────────────────────────────────
+    df["emploi"] = df["emploi_raw"].fillna(0).astype(int).clip(0, 1)
+
+    # ── Région septentrionale (Adamaoua=1, Extrême-Nord=4, Nord=6) ───────────
+    df["region_nord"] = df["region"].isin([1, 4, 6]).astype(int)
+
+    # ── Religion : 4 dummies (réf = Catholique, v130=1) ─────────────────────
+    df["rel_protestant"]   = (df["religion_raw"] == 2).astype(int)
+    df["rel_autres_chret"] = (df["religion_raw"] == 3).astype(int)
+    df["rel_musulman"]     = (df["religion_raw"] == 4).astype(int)
+    df["rel_autres"]       = df["religion_raw"].isin([5, 6, 96]).astype(int)
 
     df_mod = df[FEATURES + ["desir_bin"]].dropna()
     X = df_mod[FEATURES].astype(float)
@@ -73,7 +115,7 @@ def load_and_prepare():
 
     N = len(X)
     dist = y.value_counts(normalize=True) * 100
-    print(f"Effectif : {N:,} femmes")
+    print(f"Effectif : {N:,} femmes | {len(FEATURES)} variables")
     print(f"  Désire    : {dist.get(1,0):.1f}%  |  Ne désire : {dist.get(0,0):.1f}%")
     print(f"  → SMOTE sera appliqué pour rééquilibrer le train\n")
     return X, y
@@ -95,7 +137,7 @@ def entrainer_et_selectionner(X, y):
 
     # ── Normalisation pour SVM (fit sur numpy pour éviter le warning) ────
     scaler     = StandardScaler()
-    X_train_sc = scaler.fit_transform(X_train_sm.values)  # numpy → pas de warning feature names
+    X_train_sc = scaler.fit_transform(X_train_sm.values)
     X_test_sc  = scaler.transform(X_test.values)
 
     # SVM calibré (SVC(probability=True) déprécié dans sklearn ≥ 1.9)
@@ -165,10 +207,10 @@ def main():
     meilleur = entrainer_et_selectionner(X, y)
 
     payload = {
-        "model":     meilleur["clf"],
-        "features":  FEATURES,
-        "scaler":    meilleur["scaler"],   # None si pas de normalisation
-        "normalise": meilleur["normalise"],
+        "model":      meilleur["clf"],
+        "features":   FEATURES,
+        "scaler":     meilleur["scaler"],
+        "normalise":  meilleur["normalise"],
         "model_name": meilleur["nom"],
     }
     MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)

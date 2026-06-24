@@ -3,35 +3,45 @@ from typing import Any
 
 import joblib
 import numpy as np
-import pandas as pd
 
 MODEL_PATH = Path(__file__).parent / "model.joblib"
 
 FEATURE_NAMES = [
-    "age", "niveau_instruction", "nb_enfants_vivants", "contraceptif",
-    "statut_matrimonial", "milieu_residence", "quintile_richesse",
-    "travail", "region_nord", "religion_musulman",
+    "age", "instruction", "nb_enfants", "nb_enfants_deces",
+    "contracep_trad", "contracep_moderne",
+    "mariee", "union_libre", "veuve", "divorcee", "separee",
+    "residence_rural", "quintile", "emploi", "region_nord",
+    "rel_protestant", "rel_autres_chret", "rel_musulman", "rel_autres",
 ]
 
 FEATURE_LABELS = {
-    "age":                "Âge",
-    "niveau_instruction": "Niveau d'instruction",
-    "nb_enfants_vivants": "Nb enfants vivants",
-    "contraceptif":       "Utilisation contraceptif",
-    "statut_matrimonial": "Statut matrimonial",
-    "milieu_residence":   "Milieu de résidence",
-    "quintile_richesse":  "Quintile de richesse",
-    "travail":            "Emploi (travail)",
-    "region_nord":        "Région septentrionale",
-    "religion_musulman":  "Religion musulmane",
+    "age":               "Âge",
+    "instruction":       "Niveau d'instruction",
+    "nb_enfants":        "Nb enfants vivants",
+    "nb_enfants_deces":  "Nb enfants décédés",
+    "contracep_trad":    "Contraceptif traditionnel",
+    "contracep_moderne": "Contraceptif moderne",
+    "mariee":            "Statut : Mariée",
+    "union_libre":       "Statut : Union libre",
+    "veuve":             "Statut : Veuve",
+    "divorcee":          "Statut : Divorcée",
+    "separee":           "Statut : Séparée",
+    "residence_rural":   "Milieu rural",
+    "quintile":          "Quintile de richesse",
+    "emploi":            "Emploi (activité)",
+    "region_nord":       "Région septentrionale",
+    "rel_protestant":    "Religion : Protestante",
+    "rel_autres_chret":  "Religion : Autres chrétiens",
+    "rel_musulman":      "Religion : Musulmane",
+    "rel_autres":        "Religion : Autres",
 }
 
 MODEL_NAME_MAP = {
-    "LogisticRegression":        "Régression Logistique",
-    "RandomForestClassifier":    "Random Forest",
-    "DecisionTreeClassifier":    "Arbre de Décision",
-    "SVC":                       "SVM (noyau RBF)",
-    "CalibratedClassifierCV":    "SVM calibré (noyau RBF)",
+    "LogisticRegression":     "Régression Logistique",
+    "RandomForestClassifier": "Random Forest",
+    "DecisionTreeClassifier": "Arbre de Décision",
+    "SVC":                    "SVM (noyau RBF)",
+    "CalibratedClassifierCV": "SVM calibré (noyau RBF)",
 }
 
 
@@ -60,7 +70,6 @@ class FertilityPredictor:
             self._model_nom= payload.get("model_name",
                 MODEL_NAME_MAP.get(type(self._model).__name__, type(self._model).__name__))
         else:
-            # Ancien format (compatibilité)
             self._model    = payload
             self._features = FEATURE_NAMES
             self._scaler   = None
@@ -80,9 +89,7 @@ class FertilityPredictor:
         desire_enfant = probability >= 0.5
         confidence    = int(round(max(probability, 1 - probability) * 100))
 
-        # Importances des variables
         importances: dict[str, float] = {}
-        # CalibratedClassifierCV enveloppe le modèle réel dans .estimator
         raw_model = getattr(self._model, "estimator", self._model)
         if hasattr(raw_model, "feature_importances_"):
             raw = raw_model.feature_importances_
@@ -90,7 +97,6 @@ class FertilityPredictor:
             raw = np.abs(raw_model.coef_[0])
             raw = raw / raw.sum() if raw.sum() > 0 else raw
         else:
-            # SVM ou autre sans importance → distribution uniforme
             raw = np.ones(len(features)) / len(features)
 
         for name, imp in zip(features, raw):
@@ -118,32 +124,43 @@ class FertilityPredictor:
         elif age <= 24:
             insights.append("Le jeune âge (≤ 24 ans) est associé à un désir d'enfant plus élevé.")
 
-        nb = data.get("nb_enfants_vivants", 0)
+        nb = data.get("nb_enfants", 0)
         if nb == 0:
             insights.append("L'absence d'enfant vivant est fortement associée au désir d'en avoir un.")
         elif nb >= 5:
             insights.append(f"Avec {nb} enfants vivants, le désir d'en avoir un autre diminue nettement.")
 
-        if data.get("contraceptif") == 1:
-            insights.append("L'utilisation d'un contraceptif traduit souvent une volonté de limiter la fécondité.")
+        if data.get("contracep_moderne") == 1:
+            insights.append("L'utilisation d'un contraceptif moderne traduit souvent une volonté de limiter la fécondité.")
+        elif data.get("contracep_trad") == 1:
+            insights.append("L'utilisation d'un contraceptif traditionnel est associée à une moindre intention d'agrandissement.")
 
-        if data.get("niveau_instruction", 0) >= 2:
+        if data.get("instruction", 0) >= 2:
             insights.append("Un niveau d'instruction secondaire ou supérieur est lié à un désir de famille plus restreinte.")
 
-        if data.get("milieu_residence") == 2:
+        if data.get("residence_rural") == 1:
             insights.append("Le milieu rural est généralement associé à un désir de fécondité plus élevé.")
 
-        if data.get("quintile_richesse", 3) <= 2:
+        if data.get("quintile", 3) <= 2:
             insights.append("Un faible niveau de richesse est corrélé à un désir de fécondité plus élevé.")
 
-        if data.get("travail") == 1:
+        if data.get("emploi") == 1:
             insights.append("L'activité professionnelle féminine est associée à un recul du désir d'enfant.")
 
         if data.get("region_nord") == 1:
             insights.append("Les régions septentrionales (Adamaoua, Extrême-Nord, Nord) présentent les taux de fécondité les plus élevés du Cameroun.")
 
-        if data.get("religion_musulman") == 1:
+        if data.get("rel_musulman") == 1:
             insights.append("La religion musulmane est associée à des normes de fécondité plus élevées dans le contexte camerounais.")
+
+        if data.get("mariee") == 1:
+            insights.append("Le mariage formel est associé à un désir d'enfant plus élevé dans l'EDSC-V.")
+        elif data.get("union_libre") == 1:
+            insights.append("L'union libre présente un profil de fécondité intermédiaire entre le mariage et le célibat.")
+
+        deces = data.get("nb_enfants_deces", 0)
+        if deces >= 1:
+            insights.append(f"Le décès d'enfant(s) ({int(deces)}) est associé à un désir de remplacement plus élevé.")
 
         return insights
 
